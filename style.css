@@ -2753,3 +2753,1101 @@ body.mode-gelap .panel-akun a.tombol-logout .ikon-logout {
     display: none;
   }
 }
+
+/* Final responsive polish for StudyFlow */
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.konten-utama,
+.halaman,
+.panel,
+.hero-dashboard,
+.kartu-kalender,
+.dashboard-grid-utama,
+.layout-kalender,
+.grid-statistik,
+.grid-aksi-cepat {
+  min-width: 0;
+}
+
+.profil-sidebar {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  margin-top: 18px;
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.16s ease, background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.profil-sidebar:hover {
+  transform: translateY(-1px);
+  border-color: rgba(79, 70, 229, 0.2);
+  background: var(--surface-muted);
+}
+
+.avatar-sidebar {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(124, 58, 237, 0.18));
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.avatar-sidebar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.info-profil-sidebar {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.info-profil-sidebar strong,
+.info-profil-sidebar small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.info-profil-sidebar strong {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.info-profil-sidebar small {
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+body.mode-gelap .profil-sidebar {
+  background: var(--surface);
+}
+
+@media (max-width: 1180px) and (min-width: 769px) {
+  :root {
+    --sidebar: 232px;
+  }
+
+  .menu-samping {
+    padding-inline: 14px;
+  }
+
+  .konten-utama {
+    padding-inline: 22px;
+  }
+
+  .grid-aksi-cepat,
+  .grid-statistik {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .wadah-aplikasi {
+    display: block;
+  }
+
+  .menu-samping {
+    display: none;
+  }
+
+  .konten-utama {
+    width: 100%;
+    max-width: 100%;
+    padding: 14px 12px calc(118px + env(safe-area-inset-bottom));
+  }
+
+  .kepala-halaman {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .kepala-copy {
+    min-width: 0;
+  }
+
+  .kepala-copy .teks-kecil {
+    font-size: 11px;
+  }
+
+  .kepala-halaman h1 {
+    max-width: 100%;
+    margin-top: 2px;
+    font-size: 21px;
+    line-height: 1.18;
+    letter-spacing: -0.03em;
+  }
+
+  .header-actions {
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .tanggal-header {
+    display: none;
+  }
+
+  .hero-dashboard {
+    gap: 14px;
+    padding: 20px;
+    border-radius: 24px;
+  }
+
+  .hero-copy h2 {
+    font-size: 30px;
+    line-height: 1.05;
+  }
+
+  .hero-progress {
+    margin-top: 20px;
+  }
+
+  .hero-panel {
+    min-height: 0;
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .hero-panel strong {
+    margin-top: 12px;
+    font-size: 44px;
+    letter-spacing: -0.05em;
+  }
+
+  .grid-statistik,
+  .dashboard-grid-utama,
+  .kolom-dashboard:first-child,
+  .grid-pengaturan,
+  .layout-kalender {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .grid-statistik {
+    gap: 12px;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .kartu-statistik {
+    min-width: 0;
+    min-height: 118px;
+  }
+
+  .grid-aksi-cepat {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .kartu-aksi {
+    min-height: 112px;
+    border-radius: 20px;
+  }
+
+  .panel,
+  .form-tugas,
+  .kartu-kalender {
+    border-radius: 20px;
+  }
+
+  .form-tugas,
+  .alat-filter-tugas,
+  .baris-form,
+  .form-tambah-mata-kuliah {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar-kalender,
+  .filter-kalender {
+    padding: 14px;
+  }
+
+  .kalender-scroll-wrapper {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .nama-hari-kalender,
+  .isi-kalender {
+    min-width: 0;
+    width: 100%;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .nama-hari-kalender span {
+    padding: 9px 2px;
+    font-size: 10px;
+  }
+
+  .kotak-tanggal {
+    min-height: 66px;
+    padding: 6px;
+  }
+
+  .angka-tanggal {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+
+  .daftar-jadwal-di-tanggal {
+    display: none;
+  }
+
+  .titik-jadwal {
+    width: 8px;
+    height: 8px;
+  }
+
+  .sisi-agenda,
+  .daftar-agenda,
+  .daftar-ringkas {
+    gap: 10px;
+  }
+
+  .item-tugas,
+  .item-agenda,
+  .item-kalender {
+    width: 100%;
+  }
+
+  .bottom-navigation-mobile {
+    display: flex;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    width: calc(100% - 20px);
+    padding: 7px;
+    border-radius: 20px;
+  }
+
+  .tombol-nav-mobile {
+    min-width: 0;
+    flex: 1;
+    min-height: 48px;
+    padding: 7px 4px;
+  }
+
+  .tombol-tambah-mobile {
+    right: 14px;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+  }
+
+  .wadah-toast {
+    right: 12px;
+    bottom: calc(148px + env(safe-area-inset-bottom));
+    width: calc(100% - 24px);
+  }
+}
+
+@media (max-width: 480px) {
+  .konten-utama {
+    padding-inline: 10px;
+  }
+
+  .kepala-halaman {
+    gap: 10px;
+  }
+
+  .kepala-halaman h1 {
+    font-size: 19px;
+  }
+
+  .tombol-mode-gelap,
+  .foto-profil-header {
+    width: 38px;
+    height: 38px;
+    min-height: 38px;
+  }
+
+  .ikon-mode-gelap {
+    width: 23px;
+    height: 23px;
+    font-size: 14px;
+  }
+
+  .hero-dashboard,
+  .panel,
+  .form-tugas,
+  .kartu-kalender {
+    padding: 16px;
+  }
+
+  .kartu-kalender {
+    padding: 0;
+  }
+
+  .hero-copy h2 {
+    font-size: 27px;
+  }
+
+  .grid-aksi-cepat {
+    grid-template-columns: 1fr;
+  }
+
+  .kotak-tanggal {
+    min-height: 58px;
+    padding: 5px;
+  }
+
+  .nama-hari-kalender span {
+    font-size: 9px;
+  }
+
+  .tombol-nav-mobile small {
+    font-size: 9px;
+  }
+}
+
+/* iPhone and iOS Safari optimization */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+html {
+  min-height: 100%;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wadah-aplikasi {
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+}
+
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+.bottom-navigation-mobile,
+.tombol-tambah-mobile {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+@supports (-webkit-touch-callout: none) {
+  html,
+  body {
+    min-height: -webkit-fill-available;
+  }
+
+  body {
+    position: relative;
+  }
+
+  .wadah-aplikasi {
+    min-height: -webkit-fill-available;
+  }
+
+  .menu-samping {
+    height: 100svh;
+    height: -webkit-fill-available;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .konten-utama {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tombol-mode-gelap,
+  .lapisan-modal,
+  .bottom-navigation-mobile {
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .lapisan-modal {
+    min-height: 100svh;
+    padding-top: calc(18px + var(--safe-top));
+    padding-right: calc(18px + var(--safe-right));
+    padding-bottom: calc(18px + var(--safe-bottom));
+    padding-left: calc(18px + var(--safe-left));
+  }
+
+  .modal-detail-jadwal {
+    max-height: calc(100svh - 36px - var(--safe-top) - var(--safe-bottom));
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .kalender-scroll-wrapper,
+  .daftar-tugas,
+  .modal-detail-jadwal,
+  .menu-samping {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .progress-fill,
+  .tombol-mode-gelap,
+  .tombol-nav-mobile,
+  .tombol-tambah-mobile,
+  .kartu-aksi,
+  .kartu-statistik,
+  .item-tugas,
+  .item-agenda {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  @media (max-width: 768px) {
+    .konten-utama {
+      padding-top: calc(14px + var(--safe-top));
+      padding-right: calc(12px + var(--safe-right));
+      padding-bottom: calc(122px + var(--safe-bottom));
+      padding-left: calc(12px + var(--safe-left));
+    }
+
+    .kepala-halaman {
+      position: relative;
+      z-index: 2;
+    }
+
+    .bottom-navigation-mobile {
+      bottom: calc(10px + var(--safe-bottom));
+      left: calc(50% + (var(--safe-left) - var(--safe-right)) / 2);
+      width: calc(100% - 20px - var(--safe-left) - var(--safe-right));
+      background: color-mix(in srgb, var(--surface-strong) 92%, transparent);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+    }
+
+    .tombol-tambah-mobile {
+      right: calc(14px + var(--safe-right));
+      bottom: calc(84px + var(--safe-bottom));
+    }
+
+    .wadah-toast {
+      right: calc(12px + var(--safe-right));
+      bottom: calc(148px + var(--safe-bottom));
+      width: calc(100% - 24px - var(--safe-left) - var(--safe-right));
+    }
+
+    .kotak-tanggal {
+      min-width: 0;
+    }
+
+    .tombol-nav-mobile,
+    .tombol-mode-gelap,
+    .foto-profil-header,
+    .tombol-tambah-mobile,
+    .tombol-utama,
+    .tombol-kedua,
+    .tombol-bahaya,
+    .tombol-mode-pengaturan {
+      min-height: 44px;
+    }
+  }
+}
+
+@media screen and (max-width: 430px) {
+  .konten-utama {
+    padding-top: calc(12px + var(--safe-top));
+    padding-right: calc(10px + var(--safe-right));
+    padding-bottom: calc(122px + var(--safe-bottom));
+    padding-left: calc(10px + var(--safe-left));
+  }
+
+  .kepala-halaman {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .kepala-copy .teks-kecil {
+    font-size: 10px;
+  }
+
+  .kepala-halaman h1 {
+    font-size: 18px;
+    line-height: 1.18;
+  }
+
+  .header-actions {
+    gap: 7px;
+  }
+
+  .tombol-mode-gelap,
+  .foto-profil-header {
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+  }
+
+  .hero-dashboard,
+  .panel,
+  .form-tugas {
+    border-radius: 18px;
+  }
+
+  .hero-dashboard {
+    padding: 15px;
+  }
+
+  .hero-copy h2 {
+    font-size: 25px;
+  }
+
+  .hero-panel strong {
+    font-size: 38px;
+  }
+
+  .kartu-statistik {
+    min-height: 112px;
+    padding: 15px;
+  }
+
+  .kartu-statistik h3 {
+    font-size: 32px;
+  }
+
+  .kartu-aksi {
+    min-height: 106px;
+  }
+
+  .toolbar-kalender,
+  .filter-kalender {
+    padding: 12px;
+  }
+
+  .kotak-tanggal {
+    min-height: 54px;
+    padding: 4px;
+  }
+
+  .angka-tanggal {
+    width: 22px;
+    height: 22px;
+    font-size: 10px;
+  }
+
+  .bottom-navigation-mobile {
+    width: calc(100% - 16px - var(--safe-left) - var(--safe-right));
+    padding: 6px;
+  }
+
+  .tombol-nav-mobile {
+    min-height: 46px;
+  }
+
+  .tombol-nav-mobile span {
+    font-size: 18px;
+  }
+}
+
+@media screen and (max-width: 375px) {
+  .kepala-halaman h1 {
+    font-size: 17px;
+  }
+
+  .tombol-mode-gelap,
+  .foto-profil-header {
+    width: 38px;
+    height: 38px;
+    min-height: 38px;
+  }
+
+  .kotak-tanggal {
+    min-height: 50px;
+  }
+
+  .bottom-navigation-mobile {
+    border-radius: 18px;
+  }
+}
+
+/* Mobile interaction safety layer */
+.latar-ambient {
+  z-index: 0;
+}
+
+.wadah-aplikasi {
+  z-index: 1;
+}
+
+.konten-utama,
+.kepala-halaman,
+.header-actions,
+.halaman {
+  position: relative;
+}
+
+.kepala-halaman {
+  z-index: 20;
+}
+
+.header-actions,
+.tombol-mode-gelap,
+.foto-profil-header,
+.profil-sidebar,
+.kartu-aksi,
+.tombol-menu,
+.tombol-nav-mobile,
+.tombol-tambah-mobile,
+.kotak-tanggal,
+.tombol-utama,
+.tombol-kedua,
+.tombol-bahaya,
+.tombol-mode-pengaturan {
+  pointer-events: auto;
+}
+
+.bottom-navigation-mobile {
+  z-index: 90;
+  pointer-events: auto;
+}
+
+.tombol-tambah-mobile {
+  z-index: 91;
+  pointer-events: auto;
+}
+
+.lapisan-modal {
+  z-index: 120;
+}
+
+.lapisan-modal:not(.tampil) {
+  visibility: hidden;
+}
+
+.lapisan-modal.tampil {
+  visibility: visible;
+}
+
+button,
+[role="button"],
+a,
+input,
+select,
+textarea {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+button,
+.tombol-menu,
+.tombol-nav-mobile,
+.kartu-aksi,
+.kotak-tanggal,
+.foto-profil-header--klikable,
+.profil-sidebar {
+  -webkit-touch-callout: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tombol-menu:hover {
+    background: var(--surface-muted);
+  }
+
+  .kartu-aksi:hover,
+  .kartu-statistik:hover,
+  .item-tugas:hover,
+  .item-kalender:hover,
+  .item-agenda:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  .foto-profil-header--klikable:hover {
+    transform: scale(1.08);
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .tombol-menu:hover,
+  .kartu-aksi:hover,
+  .kartu-statistik:hover,
+  .item-tugas:hover,
+  .item-kalender:hover,
+  .item-agenda:hover,
+  .kotak-tanggal:hover,
+  .foto-profil-header--klikable:hover,
+  .tombol-mode-gelap:hover,
+  .tombol-mode-pengaturan:hover,
+  .profil-sidebar:hover,
+  .panel-akun a.tombol-logout:hover {
+    transform: none;
+    box-shadow: var(--shadow-card);
+  }
+
+  .tombol-menu:active,
+  .kartu-aksi:active,
+  .tombol-nav-mobile:active,
+  .tombol-mode-gelap:active,
+  .foto-profil-header--klikable:active,
+  .kotak-tanggal:active,
+  .tombol-tambah-mobile:active {
+    transform: scale(0.97);
+  }
+}
+
+@media (max-width: 768px) {
+  .halaman {
+    isolation: isolate;
+  }
+
+  .kepala-halaman {
+    padding-top: 2px;
+  }
+
+  .header-actions {
+    z-index: 22;
+  }
+
+  .tombol-mode-gelap,
+  .foto-profil-header,
+  .tombol-nav-mobile,
+  .tombol-tambah-mobile,
+  .tombol-utama,
+  .tombol-kedua,
+  .tombol-bahaya,
+  .tombol-mode-pengaturan,
+  .panel-akun a.tombol-logout {
+    min-height: 44px;
+  }
+
+  .tombol-mode-gelap,
+  .foto-profil-header {
+    flex: 0 0 auto;
+  }
+
+  .bottom-navigation-mobile {
+    min-height: 64px;
+  }
+
+  .kalender-scroll-wrapper {
+    touch-action: pan-y;
+  }
+
+  .kotak-tanggal {
+    touch-action: manipulation;
+  }
+
+  .modal-konfirmasi,
+  .modal-jadwal,
+  .modal-detail-jadwal {
+    max-width: calc(100vw - 24px - var(--safe-left) - var(--safe-right));
+  }
+}
+
+/* SSR refactor stability pass: keeps PHP-rendered UI touch-safe and responsive. */
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+}
+
+body {
+  overflow-x: clip;
+}
+
+.progress-fill {
+  transform-origin: left center;
+}
+
+.toast-error {
+  border-color: rgba(225, 29, 72, 0.28);
+}
+
+.item-tugas[hidden],
+#pesanFilterTugasKosong[hidden],
+#dataAgendaTanggal[hidden] {
+  display: none !important;
+}
+
+.kotak-tanggal,
+.tombol-menu,
+.tombol-nav-mobile,
+.kartu-aksi,
+.tombol-mode-gelap,
+.tombol-mode-pengaturan,
+.foto-profil-header,
+.profil-sidebar,
+.checkbox-tugas,
+.tombol-hapus-jadwal {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.kotak-tanggal:focus-visible,
+.tombol-hapus-jadwal:focus-visible,
+.checkbox-tugas:focus-visible {
+  outline: 3px solid rgba(79, 70, 229, 0.22);
+  outline-offset: 2px;
+}
+
+.item-agenda,
+.item-kalender,
+.item-tugas,
+.panel,
+.kartu-kalender {
+  color: var(--text);
+}
+
+body.mode-gelap .mini-calendar,
+body.mode-gelap .nama-hari-kalender,
+body.mode-gelap .kalender-scroll-wrapper,
+body.mode-gelap .isi-kalender,
+body.mode-gelap .kotak-tanggal,
+body.mode-gelap .item-agenda,
+body.mode-gelap .item-kalender,
+body.mode-gelap .modal-konfirmasi,
+body.mode-gelap .modal-jadwal,
+body.mode-gelap .modal-detail-jadwal {
+  background-color: var(--surface);
+  color: var(--text);
+}
+
+body.mode-gelap .tanggal-luar-bulan {
+  background: rgba(148, 163, 184, 0.08);
+  color: var(--text-faint);
+}
+
+@media (max-width: 768px) {
+  .wadah-aplikasi,
+  .konten-utama,
+  .halaman,
+  .hero-dashboard,
+  .dashboard-grid-utama,
+  .layout-kalender,
+  .grid-pengaturan,
+  .form-tugas,
+  .alat-filter-tugas {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  .hero-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-statistik,
+  .grid-aksi-cepat {
+    min-width: 0;
+  }
+
+  .item-tugas {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .aksi-tugas {
+    width: 100%;
+    margin-left: 0;
+    justify-content: space-between;
+  }
+
+  .toolbar-kalender,
+  .filter-kalender,
+  .judul-bagian,
+  .kepala-panel {
+    min-width: 0;
+  }
+
+  .aksi-kalender {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .kalender-scroll-wrapper {
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .kotak-tanggal {
+    border-radius: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .daftar-jadwal-di-tanggal {
+    pointer-events: none;
+  }
+
+  .lapisan-modal {
+    padding-top: calc(18px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+
+  .modal-konfirmasi,
+  .modal-jadwal,
+  .modal-detail-jadwal {
+    max-height: calc(100svh - 36px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid-statistik,
+  .grid-aksi-cepat {
+    grid-template-columns: 1fr;
+  }
+
+  .kepala-halaman h1,
+  .hero-copy h2,
+  .judul-tugas,
+  .item-agenda strong,
+  .item-kalender strong {
+    overflow-wrap: anywhere;
+  }
+
+  .toolbar-kalender,
+  .filter-kalender {
+    align-items: stretch;
+  }
+
+  .filter-kalender select,
+  .aksi-kalender,
+  .aksi-kalender .tombol-kedua {
+    width: 100%;
+  }
+
+  .aksi-kalender .tombol-ikon {
+    flex: 1;
+  }
+}
+
+/* Mobile bottom navigation final fix */
+@media (max-width: 768px) {
+  .konten-utama {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .bottom-navigation-mobile {
+    position: fixed;
+    left: 50%;
+    right: auto;
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    z-index: 110;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: center;
+    gap: 4px;
+    width: min(430px, calc(100vw - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+    min-height: 62px;
+    padding: 6px;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--surface-strong) 94%, transparent);
+    border: 1px solid var(--line);
+    box-shadow: 0 12px 30px rgba(31, 41, 75, 0.18);
+    transform: translate3d(-50%, 0, 0);
+    -webkit-transform: translate3d(-50%, 0, 0);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+  }
+
+  .tombol-nav-mobile {
+    width: 100%;
+    min-width: 0;
+    min-height: 50px;
+    padding: 6px 3px;
+    border-radius: 16px;
+    gap: 3px;
+  }
+
+  .tombol-nav-mobile span {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .tombol-nav-mobile small {
+    max-width: 100%;
+    font-size: 10px;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tombol-nav-mobile.aktif {
+    background: rgba(79, 70, 229, 0.12);
+    box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.08);
+  }
+
+  .tombol-tambah-mobile,
+  .tombol-tambah-cepat,
+  #tombolTambahMobile,
+  #tombolTambahCepatMobile {
+    display: none !important;
+  }
+
+  .wadah-toast {
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    z-index: 130;
+  }
+}
+
+@media (max-width: 380px) {
+  .bottom-navigation-mobile {
+    width: calc(100vw - 12px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+    min-height: 58px;
+    padding: 5px;
+    border-radius: 18px;
+  }
+
+  .tombol-nav-mobile {
+    min-height: 48px;
+    border-radius: 14px;
+  }
+
+  .tombol-nav-mobile span {
+    font-size: 17px;
+  }
+
+  .tombol-nav-mobile small {
+    font-size: 9px;
+  }
+}

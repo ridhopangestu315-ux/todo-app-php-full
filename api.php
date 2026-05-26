@@ -34,6 +34,37 @@ function respons($status, $message, $data = null) {
     exit;
 }
 
+function inputTeks($value, $max = 255) {
+    $value = trim((string)($value ?? ''));
+    if (function_exists('mb_substr')) {
+        return mb_substr($value, 0, $max, 'UTF-8');
+    }
+    return substr($value, 0, $max);
+}
+
+function validTanggal($value) {
+    $date = DateTime::createFromFormat('Y-m-d', (string)$value);
+    return $date && $date->format('Y-m-d') === $value;
+}
+
+function validJam($value) {
+    return (bool)preg_match('/^\d{2}:\d{2}$/', (string)$value);
+}
+
+function punyaKolom($conn, $table, $column) {
+    $stmt = mysqli_prepare($conn, "SELECT COUNT(*) AS cnt FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?");
+    if (!$stmt) {
+        return false;
+    }
+    mysqli_stmt_bind_param($stmt, "ss", $table, $column);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $row = mysqli_fetch_assoc($result);
+    $exists = (int)($row['cnt'] ?? 0) > 0;
+    mysqli_stmt_close($stmt);
+    return $exists;
+}
+
 // ============================================
 // GET REQUEST HANDLER
 // ============================================
@@ -43,11 +74,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
     // GET ALL TASKS
     if ($aksi === 'ambil_tugas') {
+        $kolom_waktu = punyaKolom($conn, 'tasks', 'dibuat_pada') ? 'dibuat_pada' : 'created_at';
         $stmt = mysqli_prepare($conn, "
-            SELECT id, nama_tugas, mata_kuliah, deadline, sudah_selesai, dibuat_pada 
+            SELECT id, nama_tugas, mata_kuliah, deadline, sudah_selesai, `$kolom_waktu` AS dibuat_pada
             FROM tasks 
             WHERE user_id = ? 
-            ORDER BY deadline ASC, dibuat_pada DESC
+            ORDER BY deadline ASC, `$kolom_waktu` DESC
         ");
         mysqli_stmt_bind_param($stmt, "i", $user_id);
         mysqli_stmt_execute($stmt);
@@ -58,8 +90,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
     // GET ALL SCHEDULES
     elseif ($aksi === 'ambil_jadwal') {
+        $kolom_waktu = punyaKolom($conn, 'schedules', 'dibuat_pada') ? 'dibuat_pada' : 'created_at';
         $stmt = mysqli_prepare($conn, "
-            SELECT id, nama_jadwal, tanggal, jam, kategori, dibuat_pada 
+            SELECT id, nama_jadwal, tanggal, jam, kategori, `$kolom_waktu` AS dibuat_pada
             FROM schedules 
             WHERE user_id = ? 
             ORDER BY tanggal ASC, jam ASC
@@ -149,12 +182,16 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ADD TASK
     if ($aksi === 'tambah_tugas') {
-        $nama_tugas = htmlspecialchars(trim($input['nama_tugas'] ?? ''));
-        $mata_kuliah = htmlspecialchars(trim($input['mata_kuliah'] ?? ''));
-        $deadline = htmlspecialchars(trim($input['deadline'] ?? ''));
+        $nama_tugas = inputTeks($input['nama_tugas'] ?? '', 255);
+        $mata_kuliah = inputTeks($input['mata_kuliah'] ?? '', 100);
+        $deadline = inputTeks($input['deadline'] ?? '', 10);
 
         if (!$nama_tugas || !$deadline) {
             respons('error', 'Nama tugas dan deadline wajib diisi');
+        }
+
+        if (!validTanggal($deadline)) {
+            respons('error', 'Format deadline tidak valid');
         }
 
         $stmt = mysqli_prepare($conn, "
@@ -174,12 +211,16 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // EDIT TASK
     elseif ($aksi === 'edit_tugas') {
         $id = (int)($input['id'] ?? 0);
-        $nama_tugas = htmlspecialchars(trim($input['nama_tugas'] ?? ''));
-        $mata_kuliah = htmlspecialchars(trim($input['mata_kuliah'] ?? ''));
-        $deadline = htmlspecialchars(trim($input['deadline'] ?? ''));
+        $nama_tugas = inputTeks($input['nama_tugas'] ?? '', 255);
+        $mata_kuliah = inputTeks($input['mata_kuliah'] ?? '', 100);
+        $deadline = inputTeks($input['deadline'] ?? '', 10);
 
         if (!$id || !$nama_tugas || !$deadline) {
             respons('error', 'Data tidak lengkap');
+        }
+
+        if (!validTanggal($deadline)) {
+            respons('error', 'Format deadline tidak valid');
         }
 
         $stmt = mysqli_prepare($conn, "
@@ -246,13 +287,18 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ADD SCHEDULE
     elseif ($aksi === 'tambah_jadwal') {
-        $nama_jadwal = htmlspecialchars(trim($input['nama_jadwal'] ?? ''));
-        $tanggal = htmlspecialchars(trim($input['tanggal'] ?? ''));
-        $jam = htmlspecialchars(trim($input['jam'] ?? ''));
-        $kategori = htmlspecialchars(trim($input['kategori'] ?? 'pribadi'));
+        $nama_jadwal = inputTeks($input['nama_jadwal'] ?? '', 255);
+        $tanggal = inputTeks($input['tanggal'] ?? '', 10);
+        $jam = inputTeks($input['jam'] ?? '', 5);
+        $kategori = inputTeks($input['kategori'] ?? 'pribadi', 50);
+        $kategori_valid = ['kuliah', 'organisasi', 'ujian', 'pribadi'];
 
         if (!$nama_jadwal || !$tanggal || !$jam) {
             respons('error', 'Data jadwal tidak lengkap');
+        }
+
+        if (!validTanggal($tanggal) || !validJam($jam) || !in_array($kategori, $kategori_valid, true)) {
+            respons('error', 'Data jadwal tidak valid');
         }
 
         $stmt = mysqli_prepare($conn, "
@@ -289,7 +335,7 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // UPDATE PROFILE
     elseif ($aksi === 'update_profile') {
-        $nama = htmlspecialchars(trim($input['nama'] ?? ''));
+        $nama = inputTeks($input['nama'] ?? '', 100);
 
         if (!$nama) {
             respons('error', 'Nama tidak boleh kosong');
@@ -365,8 +411,11 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
             $mime = finfo_file($finfo, $file['tmp_name']);
             finfo_close($finfo);
-        } else {
+        } elseif (function_exists('mime_content_type')) {
             $mime = mime_content_type($file['tmp_name']);
+        } else {
+            $info_gambar = getimagesize($file['tmp_name']);
+            $mime = $info_gambar['mime'] ?? '';
         }
 
         if (!in_array($ext, $allowed_ext, true) || !in_array($mime, $allowed_mime, true)) {
@@ -388,10 +437,21 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $target_path = 'uploads/' . $filename;
 
         if (move_uploaded_file($file['tmp_name'], $target_path)) {
+            $stmt = mysqli_prepare($conn, "SELECT foto_profil FROM users WHERE id = ?");
+            mysqli_stmt_bind_param($stmt, "i", $user_id);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+            $profile = mysqli_fetch_assoc($result);
+            $foto_lama = $profile['foto_profil'] ?? '';
+            mysqli_stmt_close($stmt);
+
             $stmt = mysqli_prepare($conn, "UPDATE users SET foto_profil = ? WHERE id = ?");
             mysqli_stmt_bind_param($stmt, "si", $target_path, $user_id);
 
             if (mysqli_stmt_execute($stmt)) {
+                if ($foto_lama && strpos($foto_lama, 'uploads/') === 0 && is_file($foto_lama)) {
+                    unlink($foto_lama);
+                }
                 respons('success', 'Foto profil berhasil diupload', ['foto_profil' => $target_path]);
             } else {
                 unlink($target_path);
