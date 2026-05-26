@@ -20,6 +20,9 @@ $stmt = mysqli_prepare($conn, "SELECT dark_mode, notifikasi FROM settings WHERE 
 mysqli_stmt_bind_param($stmt, "i", $user_id);
 mysqli_stmt_execute($stmt);
 $settings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?? ['dark_mode' => 0, 'notifikasi' => 1];
+$nama_user = $user_data['nama'] ?? $nama_user;
+$foto_profil = $user_data['foto_profil'] ?? '';
+$inisial_user = strtoupper(substr(trim($nama_user), 0, 1) ?: 'M');
 
 function getCount($conn, $sql, $user_id) {
     $stmt = mysqli_prepare($conn, $sql);
@@ -50,7 +53,7 @@ $deadline_dekat = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>StudyFlow - Dashboard Mahasiswa</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20260526-mode-toggle">
   <link rel="icon" type="image/png" href="icon1.PNG">
 </head>
 <body class="<?= $settings['dark_mode'] ? 'mode-gelap' : '' ?>">
@@ -100,7 +103,15 @@ $deadline_dekat = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_
             <span id="teksTanggalRealtime"></span>
             <small id="teksJamRealtime"></small>
           </div>
-          <div id="fotoProfilHeader" class="foto-profil-header foto-profil-header--klikable" style="cursor: pointer;" tabindex="0" role="button" aria-label="Buka pengaturan">
+          <button id="tombolModeGelapHeader" class="tombol-mode-gelap" type="button" data-toggle-mode-gelap aria-label="Aktifkan dark mode" aria-pressed="<?= $settings['dark_mode'] ? 'true' : 'false' ?>">
+            <span class="ikon-mode-gelap" aria-hidden="true"><?= $settings['dark_mode'] ? '☀' : '🌙' ?></span>
+          </button>
+          <div id="fotoProfilHeader" class="foto-profil-header foto-profil-header--klikable" tabindex="0" role="button" aria-label="Buka pengaturan">
+            <?php if ($foto_profil): ?>
+              <img src="<?= htmlspecialchars($foto_profil) ?>" alt="Foto profil">
+            <?php else: ?>
+              <span id="inisialProfilHeader"><?= htmlspecialchars($inisial_user) ?></span>
+            <?php endif; ?>
           </div>
         </div>
       </header>
@@ -390,16 +401,20 @@ $deadline_dekat = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_
         <div class="grid-pengaturan">
           <section class="panel">
             <h3>Profil</h3>
-            <div class="pengaturan-profil">
+            <form id="formFotoProfil" class="pengaturan-profil" enctype="multipart/form-data">
               <div id="previewFotoProfil" class="preview-foto-profil" aria-label="Preview foto profil">
-                <span id="inisialPreviewProfil">R</span>
+                <?php if ($foto_profil): ?>
+                  <img src="<?= htmlspecialchars($foto_profil) ?>" alt="Preview foto profil">
+                <?php else: ?>
+                  <span id="inisialPreviewProfil"><?= htmlspecialchars($inisial_user) ?></span>
+                <?php endif; ?>
               </div>
               <div class="aksi-profil">
-                <input type="file" id="inputFotoProfil" accept="image/png, image/jpeg, image/jpg" hidden>
+                <input type="file" id="inputFotoProfil" name="foto" accept="image/png, image/jpeg, image/jpg" hidden>
                 <button id="tombolUploadFoto" class="tombol-kedua" type="button">Upload Foto</button>
                 <button id="tombolHapusFoto" class="tombol-kecil tombol-hapus" type="button">Hapus Foto</button>
               </div>
-            </div>
+            </form>
             <small id="pesanErrorFotoProfil" class="pesan-error-foto"></small>
             <label for="inputNamaPengguna">Nama kamu</label>
             <input type="text" id="inputNamaPengguna" placeholder="Masukkan nama kamu" autocomplete="off">
@@ -408,10 +423,11 @@ $deadline_dekat = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_
 
           <section class="panel">
             <h3>Tampilan</h3>
-            <label class="baris-switch" for="toggleModeGelap">
-              <span>Aktifkan dark mode</span>
-              <input type="checkbox" id="toggleModeGelap">
-            </label>
+            <p class="teks-kecil-panel">Mode tampilan mengikuti tombol di header dan tersimpan otomatis.</p>
+            <button id="tombolModeGelapPengaturan" class="tombol-mode-pengaturan" type="button" data-toggle-mode-gelap aria-pressed="<?= $settings['dark_mode'] ? 'true' : 'false' ?>">
+              <span class="ikon-mode-gelap" aria-hidden="true"><?= $settings['dark_mode'] ? '☀' : '🌙' ?></span>
+              <span class="label-mode-gelap"><?= $settings['dark_mode'] ? 'Gunakan light mode' : 'Gunakan dark mode' ?></span>
+            </button>
           </section>
 
           <section class="panel">
@@ -442,6 +458,15 @@ $deadline_dekat = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_
             <h3>Data</h3>
             <p>Hapus semua tugas yang tersimpan di browser ini.</p>
             <button id="tombolResetData" class="tombol-bahaya" type="button">Hapus Semua Tugas</button>
+          </section>
+
+          <section class="panel panel-akun">
+            <h3>Akun</h3>
+            <p>Keluar dari sesi StudyFlow di perangkat ini.</p>
+            <a class="tombol-logout" href="logout.php" aria-label="Logout dari StudyFlow">
+              <span class="ikon-logout" aria-hidden="true">&#x21AA;</span>
+              <span>Logout</span>
+            </a>
           </section>
         </div>
       </section>
@@ -546,6 +571,15 @@ $deadline_dekat = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_
   </nav>
 
   <button id="tombolTambahMobile" class="tombol-tambah-mobile" type="button" aria-label="Tambah tugas">+</button>
+  <script>
+    window.studyflowUser = {
+      nama: <?= json_encode($nama_user) ?>,
+      fotoProfil: <?= json_encode($foto_profil) ?>,
+      inisial: <?= json_encode($inisial_user) ?>,
+      modeGelap: <?= (int)($settings['dark_mode'] ?? 0) ?>,
+      notifikasi: <?= (int)($settings['notifikasi'] ?? 1) ?>
+    };
+  </script>
   <script src="script.js"></script>
 </body>
 </html>

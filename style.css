@@ -268,6 +268,66 @@ body.mode-gelap .menu-samping {
   font-weight: 700;
 }
 
+.tombol-mode-gelap {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  color: var(--text);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.tombol-mode-gelap:hover {
+  transform: translateY(-2px) scale(1.03);
+  border-color: rgba(79, 70, 229, 0.32);
+  background: var(--surface-muted);
+  box-shadow: var(--shadow-hover);
+}
+
+.tombol-mode-gelap:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.tombol-mode-gelap:focus-visible,
+.tombol-mode-pengaturan:focus-visible {
+  outline: 3px solid rgba(79, 70, 229, 0.22);
+  outline-offset: 3px;
+}
+
+.ikon-mode-gelap {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(124, 58, 237, 0.14));
+  color: var(--primary);
+  font-size: 17px;
+  line-height: 1;
+  transition: transform 0.18s ease;
+}
+
+.tombol-mode-gelap:hover .ikon-mode-gelap,
+.tombol-mode-pengaturan:hover .ikon-mode-gelap {
+  transform: rotate(-10deg) scale(1.06);
+}
+
+body.mode-gelap .tombol-mode-gelap {
+  background: rgba(21, 29, 50, 0.82);
+}
+
+body.mode-gelap .ikon-mode-gelap {
+  background: rgba(79, 70, 229, 0.2);
+}
+
 .foto-profil-header,
 .preview-foto-profil {
   border-radius: 50%;
@@ -1206,6 +1266,35 @@ body.mode-gelap .kotak-tanggal {
   accent-color: var(--primary);
 }
 
+.tombol-mode-pengaturan {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  margin-top: 12px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-muted);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.tombol-mode-pengaturan:hover {
+  transform: translateY(-2px);
+  border-color: rgba(79, 70, 229, 0.28);
+  background: var(--surface);
+  box-shadow: var(--shadow-hover);
+}
+
+.tombol-mode-pengaturan:active {
+  transform: translateY(0);
+}
+
 .teks-kecil-panel {
   margin: 7px 0 16px;
   color: var(--text-soft);
@@ -1561,6 +1650,23 @@ body.mode-gelap .kotak-tanggal {
     height: 44px;
   }
 
+  .header-actions {
+    flex-shrink: 0;
+    gap: 9px;
+  }
+
+  .tombol-mode-gelap {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+
+  .ikon-mode-gelap {
+    width: 26px;
+    height: 26px;
+    font-size: 16px;
+  }
+
   .hero-dashboard {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -1671,6 +1777,7 @@ body.mode-gelap .kotak-tanggal {
   .tombol-modal,
   .tombol-utama,
   .tombol-kedua,
+  .tombol-mode-pengaturan,
   .tombol-bahaya {
     width: 100%;
   }
@@ -1683,6 +1790,23 @@ body.mode-gelap .kotak-tanggal {
 
   .kepala-halaman h1 {
     font-size: 22px;
+  }
+
+  .header-actions {
+    gap: 8px;
+  }
+
+  .tombol-mode-gelap,
+  .foto-profil-header {
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+  }
+
+  .ikon-mode-gelap {
+    width: 24px;
+    height: 24px;
+    font-size: 15px;
   }
 
   .hero-copy h2 {
@@ -2365,4 +2489,267 @@ body.mode-gelap .item-tugas .label-peringatan {
 .foto-profil-header--klikable:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 3px;
+}
+
+/* StudyFlow sync fixes: kalender, avatar, menu, logout, responsive */
+.tombol-menu {
+  box-shadow: none;
+  transform: none;
+}
+
+.tombol-menu:hover {
+  transform: none;
+  background: var(--surface-muted);
+  box-shadow: none;
+}
+
+.tombol-menu.aktif {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.13), rgba(124, 58, 237, 0.13));
+  border-color: rgba(79, 70, 229, 0.24);
+  color: var(--primary);
+  box-shadow: none;
+}
+
+.foto-profil-header,
+.preview-foto-profil {
+  border-color: var(--line);
+  background: var(--surface-muted);
+}
+
+.foto-profil-header img,
+.preview-foto-profil img {
+  display: block;
+  object-fit: cover;
+}
+
+.kartu-kalender {
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.toolbar-kalender,
+.filter-kalender,
+.nama-hari-kalender,
+.kalender-scroll-wrapper,
+.isi-kalender {
+  background: var(--surface);
+}
+
+.kotak-tanggal {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--line);
+}
+
+.kotak-tanggal:hover {
+  background: var(--surface-muted);
+  box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.14);
+}
+
+.tanggal-luar-bulan {
+  background: var(--surface-muted);
+  color: var(--text-faint);
+}
+
+body.mode-gelap .toolbar-kalender,
+body.mode-gelap .filter-kalender,
+body.mode-gelap .nama-hari-kalender,
+body.mode-gelap .kalender-scroll-wrapper,
+body.mode-gelap .isi-kalender,
+body.mode-gelap .kotak-tanggal,
+body.mode-gelap .mini-calendar,
+body.mode-gelap .panel-kalender-preview {
+  background: var(--surface);
+}
+
+body.mode-gelap .tanggal-luar-bulan {
+  background: var(--surface-muted);
+}
+
+.mini-calendar {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+}
+
+.mini-calendar-grid span {
+  background: var(--surface);
+  border: 1px solid transparent;
+}
+
+.mini-calendar-grid span:empty {
+  background: transparent;
+}
+
+.mini-calendar-grid .mini-tanggal-aktif {
+  background: var(--surface);
+  color: var(--text-soft);
+}
+
+.mini-calendar-grid .mini-ada-agenda {
+  border-color: rgba(79, 70, 229, 0.26);
+  outline: none;
+}
+
+.panel-akun p {
+  margin: 8px 0 14px;
+}
+
+.panel-akun a.tombol-logout,
+.panel-akun a.tombol-logout:visited {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid rgba(225, 29, 72, 0.28);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(225, 29, 72, 0.12), rgba(217, 119, 6, 0.1)),
+    var(--surface);
+  color: #be123c;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none !important;
+  box-shadow: 0 8px 18px rgba(225, 29, 72, 0.08);
+  transition: 0.16s ease;
+}
+
+.panel-akun a.tombol-logout .ikon-logout {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(225, 29, 72, 0.14);
+  color: var(--red);
+  font-size: 17px;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.panel-akun a.tombol-logout:hover {
+  border-color: rgba(225, 29, 72, 0.38);
+  background:
+    linear-gradient(135deg, rgba(225, 29, 72, 0.17), rgba(217, 119, 6, 0.14)),
+    var(--surface);
+  color: #be123c;
+  text-decoration: none !important;
+  box-shadow: 0 12px 24px rgba(225, 29, 72, 0.14);
+  transform: translateY(-2px);
+}
+
+.panel-akun a.tombol-logout:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 14px rgba(225, 29, 72, 0.1);
+}
+
+.panel-akun a.tombol-logout:focus-visible {
+  outline: 3px solid rgba(225, 29, 72, 0.22);
+  outline-offset: 3px;
+}
+
+body.mode-gelap .panel-akun a.tombol-logout,
+body.mode-gelap .panel-akun a.tombol-logout:visited,
+body.mode-gelap .panel-akun a.tombol-logout:hover {
+  color: #fb7185;
+  background:
+    linear-gradient(135deg, rgba(225, 29, 72, 0.18), rgba(217, 119, 6, 0.12)),
+    var(--surface);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.2);
+}
+
+body.mode-gelap .panel-akun a.tombol-logout .ikon-logout {
+  background: rgba(225, 29, 72, 0.2);
+  color: #fb7185;
+}
+
+@media (max-width: 768px) {
+  .kepala-halaman {
+    gap: 12px;
+  }
+
+  .kepala-copy {
+    min-width: 0;
+  }
+
+  .grid-statistik {
+    display: grid;
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .kartu-statistik {
+    min-width: 0;
+  }
+
+  .layout-kalender,
+  .dashboard-grid-utama,
+  .kolom-dashboard:first-child,
+  .grid-pengaturan {
+    grid-template-columns: 1fr;
+  }
+
+  .kalender-scroll-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border-top: 1px solid var(--line);
+  }
+
+  .nama-hari-kalender,
+  .isi-kalender {
+    min-width: 0;
+  }
+
+  .kotak-tanggal {
+    min-height: 76px;
+    padding: 6px;
+  }
+
+  .label-jadwal {
+    max-width: 100%;
+    font-size: 10px;
+  }
+
+  .pengaturan-profil,
+  .aksi-profil,
+  .tombol-logout {
+    width: 100%;
+  }
+
+  .aksi-profil {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .kepala-halaman {
+    align-items: center;
+  }
+
+  .kepala-halaman h1 {
+    word-break: break-word;
+  }
+
+  .toolbar-kalender,
+  .filter-kalender {
+    padding: 14px;
+  }
+
+  .nama-hari-kalender span {
+    padding-inline: 2px;
+    font-size: 10px;
+  }
+
+  .kotak-tanggal {
+    min-height: 64px;
+  }
+
+  .daftar-jadwal-di-tanggal {
+    display: none;
+  }
 }

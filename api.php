@@ -144,8 +144,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 // ============================================
 elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_id = validasiSession();
-    $aksi = $_POST['aksi'] ?? '';
     $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+    $aksi = $_POST['aksi'] ?? ($input['aksi'] ?? ($_GET['aksi'] ?? ''));
 
     // ADD TASK
     if ($aksi === 'tambah_tugas') {
@@ -347,23 +347,44 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $file = $_FILES['foto'];
-        $allowed = ['image/jpeg', 'image/jpg', 'image/png'];
+        $allowed_ext = ['jpg', 'jpeg', 'png'];
+        $allowed_mime = ['image/jpeg', 'image/png'];
         $max_size = 2 * 1024 * 1024;
+
+        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            respons('error', 'Upload gagal. Kode error: ' . (int)$file['error']);
+        }
 
         if ($file['size'] > $max_size) {
             respons('error', 'Ukuran file terlalu besar (max 2MB)');
         }
 
-        if (!in_array($file['type'], $allowed)) {
-            respons('error', 'Format file tidak didukung (hanya JPG, PNG)');
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $mime = '';
+        if (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+        } else {
+            $mime = mime_content_type($file['tmp_name']);
+        }
+
+        if (!in_array($ext, $allowed_ext, true) || !in_array($mime, $allowed_mime, true)) {
+            respons('error', 'Format foto harus JPG, JPEG, atau PNG');
         }
 
         // Buat folder uploads jika belum ada
         if (!is_dir('uploads')) {
-            mkdir('uploads', 0755, true);
+            if (!mkdir('uploads', 0755, true)) {
+                respons('error', 'Folder uploads tidak bisa dibuat');
+            }
         }
 
-        $filename = 'user_' . $user_id . '_' . time() . '.' . pathinfo($file['name'], PATHINFO_EXTENSION);
+        if (!is_writable('uploads')) {
+            respons('error', 'Folder uploads tidak memiliki permission tulis');
+        }
+
+        $filename = 'user_' . $user_id . '_' . time() . '.' . $ext;
         $target_path = 'uploads/' . $filename;
 
         if (move_uploaded_file($file['tmp_name'], $target_path)) {
@@ -379,6 +400,27 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             respons('error', 'Gagal mengupload file');
         }
+    }
+
+    elseif ($aksi === 'hapus_foto') {
+        $stmt = mysqli_prepare($conn, "SELECT foto_profil FROM users WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $user_id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $profile = mysqli_fetch_assoc($result);
+        $foto_lama = $profile['foto_profil'] ?? '';
+
+        $stmt = mysqli_prepare($conn, "UPDATE users SET foto_profil = NULL WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $user_id);
+
+        if (mysqli_stmt_execute($stmt)) {
+            if ($foto_lama && strpos($foto_lama, 'uploads/') === 0 && is_file($foto_lama)) {
+                unlink($foto_lama);
+            }
+            respons('success', 'Foto profil berhasil dihapus');
+        }
+
+        respons('error', 'Gagal menghapus foto profil');
     }
 
     // RESET ACCOUNT

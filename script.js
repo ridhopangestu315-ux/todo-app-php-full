@@ -174,7 +174,6 @@ const app = {
 
             return result.data;
         } catch (error) {
-            console.error('API Error:', error);
             this.showToast('Terjadi kesalahan jaringan', 'error');
             return null;
         }
@@ -680,9 +679,7 @@ const app = {
 // ============================================
 // INISIALISASI SAAT DOM READY
 // ============================================
-document.addEventListener('DOMContentLoaded', () => {
-    app.init();
-});
+// Script lama berbasis API tidak dijalankan agar tidak bentrok dengan script utama di bawah.
 
 const aturanFotoProfil = {
   ukuranMaksimal: 2 * 1024 * 1024,
@@ -698,6 +695,34 @@ const daftarKategoriJadwal = {
   pribadi: { nama: "Pribadi", warna: "#a142f4" },
   deadline: { nama: "Deadline", warna: "#ea4335" }
 };
+
+const namaPenyimpananLocalStorage = {
+  tugas: "studyflow_tugas",
+  jadwal: "studyflow_jadwal",
+  daftarMataKuliah: "studyflow_mata_kuliah",
+  namaPengguna: "studyflow_nama_pengguna",
+  fotoProfil: "studyflow_foto_profil",
+  modeGelap: "studyflow_mode_gelap",
+  notifikasiDeadline: "studyflow_notifikasi_deadline"
+};
+
+const dataProfilAwal = window.studyflowUser || {};
+
+async function kirimApiForm(aksi, dataTambahan) {
+  const formData = new FormData();
+  formData.append("aksi", aksi);
+
+  Object.keys(dataTambahan || {}).forEach(function (namaField) {
+    formData.append(namaField, dataTambahan[namaField]);
+  });
+
+  const response = await fetch("api.php", {
+    method: "POST",
+    body: formData
+  });
+
+  return response.json();
+}
 
 /*
 ================================
@@ -746,8 +771,8 @@ const dataAplikasi = {
   halamanYangSedangDibuka: "dashboard",
   bulanKalenderYangDibuka: new Date(),
   tanggalJadwalYangDipilih: ubahTanggalMenjadiKode(new Date()),
-  notifikasiDeadlineAktif: ambilDataDariLocalStorage(namaPenyimpananLocalStorage.notifikasiDeadline, true),
-  modeGelapAktif: ambilDataDariLocalStorage(namaPenyimpananLocalStorage.modeGelap, false)
+  notifikasiDeadlineAktif: Boolean(Number(dataProfilAwal.notifikasi ?? ambilDataDariLocalStorage(namaPenyimpananLocalStorage.notifikasiDeadline, true))),
+  modeGelapAktif: Boolean(Number(dataProfilAwal.modeGelap ?? (document.body.classList.contains("mode-gelap") ? 1 : 0)))
 };
 
 /*
@@ -821,7 +846,7 @@ const elemenHalaman = {
 
   inputNamaPengguna: document.getElementById("inputNamaPengguna"),
   tombolSimpanNama: document.getElementById("tombolSimpanNama"),
-  toggleModeGelap: document.getElementById("toggleModeGelap"),
+  semuaTombolModeGelap: document.querySelectorAll("[data-toggle-mode-gelap]"),
   toggleNotifikasiDeadline: document.getElementById("toggleNotifikasiDeadline"),
   tombolResetData: document.getElementById("tombolResetData"),
 
@@ -1853,7 +1878,7 @@ function tampilkanHalaman(namaHalaman) {
   }
 }
 
-function simpanNamaPengguna() {
+async function simpanNamaPengguna() {
   const namaPengguna = elemenHalaman.inputNamaPengguna.value.trim();
 
   if (namaPengguna === "") {
@@ -1861,9 +1886,21 @@ function simpanNamaPengguna() {
     return;
   }
 
-  localStorage.setItem(namaPenyimpananLocalStorage.namaPengguna, namaPengguna);
-  tampilkanNamaPengguna(namaPengguna);
-  tampilkanToast("Nama profil berhasil disimpan.");
+  try {
+    const hasil = await kirimApiForm("update_profile", { nama: namaPengguna });
+
+    if (hasil.status !== "success") {
+      tampilkanToast(hasil.message || "Gagal menyimpan profil.");
+      return;
+    }
+
+    localStorage.setItem(namaPenyimpananLocalStorage.namaPengguna, namaPengguna);
+    dataProfilAwal.nama = namaPengguna;
+    tampilkanNamaPengguna(namaPengguna);
+    tampilkanToast("Nama profil berhasil disimpan.");
+  } catch (error) {
+    tampilkanToast("Gagal menyimpan profil. Periksa koneksi aplikasi.");
+  }
 }
 
 function tampilkanNamaPengguna(namaPengguna) {
@@ -1879,14 +1916,50 @@ function tampilkanNamaPengguna(namaPengguna) {
 
 function tampilkanInisialProfil(namaPengguna) {
   const inisial = namaPengguna ? namaPengguna.trim().charAt(0).toUpperCase() : "M";
+  dataProfilAwal.inisial = inisial;
 
-  elemenHalaman.inisialProfilHeader.textContent = inisial;
-  elemenHalaman.inisialPreviewProfil.textContent = inisial;
+  if (dataProfilAwal.fotoProfil) {
+    return;
+  }
+
+  if (!elemenHalaman.inisialProfilHeader && elemenHalaman.fotoProfilHeader) {
+    elemenHalaman.fotoProfilHeader.innerHTML = `<span id="inisialProfilHeader">${inisial}</span>`;
+    elemenHalaman.inisialProfilHeader = document.getElementById("inisialProfilHeader");
+  }
+
+  if (!elemenHalaman.inisialPreviewProfil && elemenHalaman.previewFotoProfil) {
+    elemenHalaman.previewFotoProfil.innerHTML = `<span id="inisialPreviewProfil">${inisial}</span>`;
+    elemenHalaman.inisialPreviewProfil = document.getElementById("inisialPreviewProfil");
+  }
+
+  if (elemenHalaman.inisialProfilHeader) {
+    elemenHalaman.inisialProfilHeader.textContent = inisial;
+  }
+
+  if (elemenHalaman.inisialPreviewProfil) {
+    elemenHalaman.inisialPreviewProfil.textContent = inisial;
+  }
 }
 
 function terapkanModeGelap() {
   elemenHalaman.body.classList.toggle("mode-gelap", dataAplikasi.modeGelapAktif);
-  elemenHalaman.toggleModeGelap.checked = dataAplikasi.modeGelapAktif;
+
+  elemenHalaman.semuaTombolModeGelap.forEach(function (tombolMode) {
+    const ikonMode = tombolMode.querySelector(".ikon-mode-gelap");
+    const labelMode = tombolMode.querySelector(".label-mode-gelap");
+    const modeGelapAktif = dataAplikasi.modeGelapAktif;
+
+    tombolMode.setAttribute("aria-pressed", modeGelapAktif ? "true" : "false");
+    tombolMode.setAttribute("aria-label", modeGelapAktif ? "Aktifkan light mode" : "Aktifkan dark mode");
+
+    if (ikonMode) {
+      ikonMode.textContent = modeGelapAktif ? "☀" : "🌙";
+    }
+
+    if (labelMode) {
+      labelMode.textContent = modeGelapAktif ? "Gunakan light mode" : "Gunakan dark mode";
+    }
+  });
 }
 
 /*
@@ -1897,9 +1970,10 @@ File dibaca dengan FileReader, ditampilkan sebagai preview, lalu diresize dengan
 Hasil resize disimpan ke localStorage sebagai teks base64.
 */
 function tampilkanFotoProfil(dataFoto) {
-  const fotoTersimpan = dataFoto || localStorage.getItem(namaPenyimpananLocalStorage.fotoProfil);
-  const teksInisialHeader = elemenHalaman.inisialProfilHeader.textContent || "M";
-  const teksInisialPreview = elemenHalaman.inisialPreviewProfil.textContent || "M";
+  const fotoTersimpan = dataFoto || dataProfilAwal.fotoProfil || localStorage.getItem(namaPenyimpananLocalStorage.fotoProfil);
+  const namaAktif = dataProfilAwal.nama || localStorage.getItem(namaPenyimpananLocalStorage.namaPengguna) || "";
+  const teksInisialHeader = dataProfilAwal.inisial || (namaAktif.trim().charAt(0).toUpperCase() || "M");
+  const teksInisialPreview = teksInisialHeader;
 
   if (!fotoTersimpan) {
     elemenHalaman.fotoProfilHeader.innerHTML = `<span id="inisialProfilHeader">${teksInisialHeader}</span>`;
@@ -1909,8 +1983,10 @@ function tampilkanFotoProfil(dataFoto) {
     return;
   }
 
-  elemenHalaman.fotoProfilHeader.innerHTML = `<img src="${fotoTersimpan}" alt="Foto profil">`;
-  elemenHalaman.previewFotoProfil.innerHTML = `<img src="${fotoTersimpan}" alt="Preview foto profil">`;
+  elemenHalaman.fotoProfilHeader.innerHTML = `<img src="${amankanTeksUntukHtml(fotoTersimpan)}" alt="Foto profil">`;
+  elemenHalaman.previewFotoProfil.innerHTML = `<img src="${amankanTeksUntukHtml(fotoTersimpan)}" alt="Preview foto profil">`;
+  elemenHalaman.inisialProfilHeader = document.getElementById("inisialProfilHeader");
+  elemenHalaman.inisialPreviewProfil = document.getElementById("inisialPreviewProfil");
 }
 
 function tampilkanErrorFotoProfil(pesan) {
@@ -1999,22 +2075,50 @@ async function prosesUploadFotoProfil(event) {
     const fotoAsli = await bacaFileFotoSebagaiDataUrl(fileFoto);
     tampilkanFotoProfil(fotoAsli);
 
-    const fotoYangSudahDiperkecil = await perkecilUkuranFoto(fotoAsli);
-    localStorage.setItem(namaPenyimpananLocalStorage.fotoProfil, fotoYangSudahDiperkecil);
-    tampilkanFotoProfil(fotoYangSudahDiperkecil);
+    const formData = new FormData();
+    formData.append("aksi", "upload_foto");
+    formData.append("foto", fileFoto);
+
+    const response = await fetch("api.php", {
+      method: "POST",
+      body: formData
+    });
+    const hasil = await response.json();
+
+    if (hasil.status !== "success") {
+      tampilkanFotoProfil(dataProfilAwal.fotoProfil || "");
+      tampilkanErrorFotoProfil(hasil.message || "Gagal mengupload foto.");
+      return;
+    }
+
+    dataProfilAwal.fotoProfil = hasil.data.foto_profil;
+    localStorage.removeItem(namaPenyimpananLocalStorage.fotoProfil);
+    tampilkanFotoProfil(hasil.data.foto_profil);
     tampilkanToast("Foto profil berhasil diperbarui.");
   } catch (error) {
-    tampilkanErrorFotoProfil(error.message);
+    tampilkanErrorFotoProfil("Gagal mengupload foto. Periksa koneksi aplikasi.");
   } finally {
     elemenHalaman.inputFotoProfil.value = "";
   }
 }
 
-function hapusFotoProfil() {
-  localStorage.removeItem(namaPenyimpananLocalStorage.fotoProfil);
-  bersihkanErrorFotoProfil();
-  tampilkanFotoProfil("");
-  tampilkanToast("Foto profil berhasil dihapus.");
+async function hapusFotoProfil() {
+  try {
+    const hasil = await kirimApiForm("hapus_foto");
+
+    if (hasil.status !== "success") {
+      tampilkanErrorFotoProfil(hasil.message || "Gagal menghapus foto profil.");
+      return;
+    }
+
+    dataProfilAwal.fotoProfil = "";
+    localStorage.removeItem(namaPenyimpananLocalStorage.fotoProfil);
+    bersihkanErrorFotoProfil();
+    tampilkanFotoProfil("");
+    tampilkanToast("Foto profil berhasil dihapus.");
+  } catch (error) {
+    tampilkanErrorFotoProfil("Gagal menghapus foto profil. Periksa koneksi aplikasi.");
+  }
 }
 
 /*
@@ -2518,6 +2622,10 @@ function pasangSemuaEventListener() {
     tombolAksi.addEventListener("click", function () {
       const aksi = tombolAksi.dataset.quickAction;
 
+      if (!aksi) {
+        return;
+      }
+
       if (aksi === "tambah-tugas") {
         tampilkanHalaman("tugas");
         elemenHalaman.inputNamaTugas.focus();
@@ -2541,6 +2649,7 @@ function pasangSemuaEventListener() {
         elemenHalaman.inputPencarianTugas.value = "";
         elemenHalaman.filterStatusTugas.value = "belum";
         tampilkanDaftarTugas();
+        return;
       }
     });
   });
@@ -2784,16 +2893,30 @@ function pasangSemuaEventListener() {
   elemenHalaman.inputFotoProfil.addEventListener("change", prosesUploadFotoProfil);
   elemenHalaman.tombolHapusFoto.addEventListener("click", hapusFotoProfil);
 
-  elemenHalaman.toggleModeGelap.addEventListener("change", function (event) {
-    dataAplikasi.modeGelapAktif = event.target.checked;
-    simpanDataKeLocalStorage(namaPenyimpananLocalStorage.modeGelap, dataAplikasi.modeGelapAktif);
-    terapkanModeGelap();
+  elemenHalaman.semuaTombolModeGelap.forEach(function (tombolMode) {
+    tombolMode.addEventListener("click", async function () {
+      dataAplikasi.modeGelapAktif = !dataAplikasi.modeGelapAktif;
+      simpanDataKeLocalStorage(namaPenyimpananLocalStorage.modeGelap, dataAplikasi.modeGelapAktif);
+      terapkanModeGelap();
+
+      try {
+        await kirimApiForm("update_dark_mode", { dark_mode: dataAplikasi.modeGelapAktif ? 1 : 0 });
+      } catch (error) {
+        // Mode tetap aktif di browser; hindari toast palsu saat koneksi API tersendat.
+      }
+    });
   });
 
-  elemenHalaman.toggleNotifikasiDeadline.addEventListener("change", function (event) {
+  elemenHalaman.toggleNotifikasiDeadline.addEventListener("change", async function (event) {
     dataAplikasi.notifikasiDeadlineAktif = event.target.checked;
     simpanDataKeLocalStorage(namaPenyimpananLocalStorage.notifikasiDeadline, dataAplikasi.notifikasiDeadlineAktif);
     tampilkanDashboard();
+
+    try {
+      await kirimApiForm("update_settings", { notifikasi: dataAplikasi.notifikasiDeadlineAktif ? 1 : 0 });
+    } catch (error) {
+      tampilkanToast("Pengaturan notifikasi tersimpan di browser, tetapi belum tersinkron ke server.");
+    }
   });
 
   elemenHalaman.tombolResetData.addEventListener("click", resetSemuaDataTugas);
@@ -3121,7 +3244,7 @@ function jalankanAplikasi() {
   const tanggalHariIni = ubahTanggalMenjadiKode(new Date());
   elemenHalaman.inputDeadlineTugas.min = tanggalHariIni;
 
-  const namaPenggunaTersimpan = localStorage.getItem(namaPenyimpananLocalStorage.namaPengguna);
+  const namaPenggunaTersimpan = dataProfilAwal.nama || localStorage.getItem(namaPenyimpananLocalStorage.namaPengguna);
 
   if (namaPenggunaTersimpan) {
     elemenHalaman.inputNamaPengguna.value = namaPenggunaTersimpan;
