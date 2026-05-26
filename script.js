@@ -100,6 +100,19 @@ const app = {
             btnResetData.addEventListener('click', () => this.handleResetData());
         }
 
+        const fotoProfilHeader = document.getElementById('fotoProfilHeader');
+        if (fotoProfilHeader) {
+            fotoProfilHeader.setAttribute('tabindex', '0');
+            fotoProfilHeader.setAttribute('role', 'button');
+            fotoProfilHeader.addEventListener('click', () => this.navigateToPage('pengaturan'));
+            fotoProfilHeader.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.navigateToPage('pengaturan');
+                }
+            });
+        }
+
         // Calendar buttons
         const btnBulanSebelumnya = document.getElementById('tombolBulanSebelumnya');
         const btnBulanBerikutnya = document.getElementById('tombolBulanBerikutnya');
@@ -564,10 +577,12 @@ const app = {
     // ========== UI HELPERS ==========
     navigateToPage(page) {
         document.querySelectorAll('.halaman').forEach(h => h.classList.remove('halaman-aktif'));
-        document.getElementById(page).classList.add('halaman-aktif');
+        const targetPage = document.getElementById(page);
+        if (targetPage) targetPage.classList.add('halaman-aktif');
 
         document.querySelectorAll('.tombol-menu').forEach(b => b.classList.remove('aktif'));
-        document.querySelector(`[data-halaman="${page}"]`).classList.add('aktif');
+        const targetMenu = document.querySelector(`[data-halaman="${page}"]`);
+        if (targetMenu) targetMenu.classList.add('aktif');
 
         this.currentPage = page;
 

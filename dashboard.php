@@ -1,5 +1,4 @@
 <?php
-session_start();
 date_default_timezone_set('Asia/Jakarta');
 require 'koneksi.php';
 
@@ -21,7 +20,29 @@ $stmt = mysqli_prepare($conn, "SELECT dark_mode, notifikasi FROM settings WHERE 
 mysqli_stmt_bind_param($stmt, "i", $user_id);
 mysqli_stmt_execute($stmt);
 $settings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?? ['dark_mode' => 0, 'notifikasi' => 1];
+
+function getCount($conn, $sql, $user_id) {
+    $stmt = mysqli_prepare($conn, $sql);
+    if (!$stmt) {
+        return 0;
+    }
+
+    mysqli_stmt_bind_param($stmt, "i", $user_id);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_bind_result($stmt, $count);
+    mysqli_stmt_fetch($stmt);
+    mysqli_stmt_close($stmt);
+
+    return (int) ($count ?? 0);
+}
+
+$total_tugas = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ?", $user_id);
+$tugas_selesai = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND sudah_selesai = 1", $user_id);
+$tugas_hariini = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND deadline = CURDATE() AND sudah_selesai = 0", $user_id);
+$deadline_dekat = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 2 DAY) AND sudah_selesai = 0", $user_id);
 ?>
+
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -79,12 +100,7 @@ $settings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?? ['dark_mode' =>
             <span id="teksTanggalRealtime"></span>
             <small id="teksJamRealtime"></small>
           </div>
-          <div id="fotoProfilHeader" class="foto-profil-header foto-profil-header--klikable" style="cursor: pointer;">
-            <?php if($user_data['foto_profil']): ?>
-              <img src="<?= htmlspecialchars($user_data['foto_profil']) ?>" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">
-            <?php else: ?>
-              <span id="inisialProfilHeader"><?= strtoupper(substr($nama_user, 0, 1)) ?></span>
-            <?php endif; ?>
+          <div id="fotoProfilHeader" class="foto-profil-header foto-profil-header--klikable" style="cursor: pointer;" tabindex="0" role="button" aria-label="Buka pengaturan">
           </div>
         </div>
       </header>
