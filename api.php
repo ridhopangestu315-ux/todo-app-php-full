@@ -1,0 +1,407 @@
+<?php
+/**
+ * ============================================
+ * API - STUDYFLOW
+ * ============================================
+ * File ini menangani semua request AJAX
+ * Menggunakan prepared statement untuk keamanan
+ * Mengembalikan JSON response
+ */
+
+session_start();
+date_default_timezone_set('Asia/Jakarta');
+require 'koneksi.php';
+
+header('Content-Type: application/json; charset=utf-8');
+
+// Fungsi validasi session
+function validasiSession() {
+    if (!isset($_SESSION['user_id'])) {
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+        exit;
+    }
+    return (int)$_SESSION['user_id'];
+}
+
+// Fungsi respons JSON
+function respons($status, $message, $data = null) {
+    echo json_encode([
+        'status' => $status,
+        'message' => $message,
+        'data' => $data
+    ]);
+    exit;
+}
+
+// ============================================
+// GET REQUEST HANDLER
+// ============================================
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $user_id = validasiSession();
+    $aksi = $_GET['aksi'] ?? '';
+
+    // GET ALL TASKS
+    if ($aksi === 'ambil_tugas') {
+        $stmt = mysqli_prepare($conn, "
+            SELECT id, nama_tugas, mata_kuliah, deadline, sudah_selesai, dibuat_pada 
+            FROM tasks 
+            WHERE user_id = ? 
+            ORDER BY deadline ASC, dibuat_pada DESC
+        ");
+        mysqli_stmt_bind_param($stmt, "i", $user_id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $tasks = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        respons('success', 'Data tugas berhasil diambil', $tasks);
+    }
+
+    // GET ALL SCHEDULES
+    elseif ($aksi === 'ambil_jadwal') {
+        $stmt = mysqli_prepare($conn, "
+            SELECT id, nama_jadwal, tanggal, jam, kategori, dibuat_pada 
+            FROM schedules 
+            WHERE user_id = ? 
+            ORDER BY tanggal ASC, jam ASC
+        ");
+        mysqli_stmt_bind_param($stmt, "i", $user_id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $schedules = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        respons('success', 'Data jadwal berhasil diambil', $schedules);
+    }
+
+    // GET DASHBOARD STATS
+    elseif ($aksi === 'dashboard_stats') {
+        $queries = [
+            'total_tugas' => "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ?",
+            'tugas_selesai' => "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND sudah_selesai = 1",
+            'tugas_hariini' => "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND deadline = CURDATE() AND sudah_selesai = 0",
+            'deadline_dekat' => "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 2 DAY) AND sudah_selesai = 0"
+        ];
+
+        $stats = [];
+        foreach ($queries as $key => $sql) {
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "i", $user_id);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+            $row = mysqli_fetch_assoc($result);
+            $stats[$key] = $row['cnt'] ?? 0;
+        }
+        respons('success', 'Statistik berhasil diambil', $stats);
+    }
+
+    // GET USER PROFILE
+    elseif ($aksi === 'ambil_profile') {
+        $stmt = mysqli_prepare($conn, "SELECT id, nama, email, foto_profil FROM users WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $user_id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $profile = mysqli_fetch_assoc($result);
+        respons('success', 'Profile berhasil diambil', $profile);
+    }
+
+    // GET USER SETTINGS
+    elseif ($aksi === 'ambil_settings') {
+        $stmt = mysqli_prepare($conn, "SELECT dark_mode, notifikasi FROM settings WHERE user_id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $user_id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $settings = mysqli_fetch_assoc($result);
+        
+        if (!$settings) {
+            // Buat settings default jika belum ada
+            $stmt = mysqli_prepare($conn, "INSERT INTO settings (user_id, dark_mode, notifikasi) VALUES (?, 0, 1)");
+            mysqli_stmt_bind_param($stmt, "i", $user_id);
+            mysqli_stmt_execute($stmt);
+            $settings = ['dark_mode' => 0, 'notifikasi' => 1];
+        }
+        respons('success', 'Settings berhasil diambil', $settings);
+    }
+
+    // GET TASK BY ID
+    elseif ($aksi === 'ambil_tugas_by_id') {
+        $id = (int)($_GET['id'] ?? 0);
+        $stmt = mysqli_prepare($conn, "
+            SELECT * FROM tasks 
+            WHERE id = ? AND user_id = ?
+        ");
+        mysqli_stmt_bind_param($stmt, "ii", $id, $user_id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $task = mysqli_fetch_assoc($result);
+        
+        if (!$task) {
+            respons('error', 'Tugas tidak ditemukan');
+        }
+        respons('success', 'Tugas berhasil diambil', $task);
+    }
+}
+
+// ============================================
+// POST REQUEST HANDLER
+// ============================================
+elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $user_id = validasiSession();
+    $aksi = $_POST['aksi'] ?? '';
+    $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+
+    // ADD TASK
+    if ($aksi === 'tambah_tugas') {
+        $nama_tugas = htmlspecialchars(trim($input['nama_tugas'] ?? ''));
+        $mata_kuliah = htmlspecialchars(trim($input['mata_kuliah'] ?? ''));
+        $deadline = htmlspecialchars(trim($input['deadline'] ?? ''));
+
+        if (!$nama_tugas || !$deadline) {
+            respons('error', 'Nama tugas dan deadline wajib diisi');
+        }
+
+        $stmt = mysqli_prepare($conn, "
+            INSERT INTO tasks (user_id, nama_tugas, mata_kuliah, deadline) 
+            VALUES (?, ?, ?, ?)
+        ");
+        mysqli_stmt_bind_param($stmt, "isss", $user_id, $nama_tugas, $mata_kuliah, $deadline);
+
+        if (mysqli_stmt_execute($stmt)) {
+            $task_id = mysqli_insert_id($conn);
+            respons('success', 'Tugas berhasil ditambahkan', ['id' => $task_id]);
+        } else {
+            respons('error', 'Gagal menambahkan tugas');
+        }
+    }
+
+    // EDIT TASK
+    elseif ($aksi === 'edit_tugas') {
+        $id = (int)($input['id'] ?? 0);
+        $nama_tugas = htmlspecialchars(trim($input['nama_tugas'] ?? ''));
+        $mata_kuliah = htmlspecialchars(trim($input['mata_kuliah'] ?? ''));
+        $deadline = htmlspecialchars(trim($input['deadline'] ?? ''));
+
+        if (!$id || !$nama_tugas || !$deadline) {
+            respons('error', 'Data tidak lengkap');
+        }
+
+        $stmt = mysqli_prepare($conn, "
+            UPDATE tasks 
+            SET nama_tugas = ?, mata_kuliah = ?, deadline = ? 
+            WHERE id = ? AND user_id = ?
+        ");
+        mysqli_stmt_bind_param($stmt, "sssii", $nama_tugas, $mata_kuliah, $deadline, $id, $user_id);
+
+        if (mysqli_stmt_execute($stmt)) {
+            respons('success', 'Tugas berhasil diperbarui');
+        } else {
+            respons('error', 'Gagal memperbarui tugas');
+        }
+    }
+
+    // DELETE TASK
+    elseif ($aksi === 'hapus_tugas') {
+        $id = (int)($input['id'] ?? 0);
+
+        if (!$id) {
+            respons('error', 'ID tugas tidak valid');
+        }
+
+        $stmt = mysqli_prepare($conn, "DELETE FROM tasks WHERE id = ? AND user_id = ?");
+        mysqli_stmt_bind_param($stmt, "ii", $id, $user_id);
+
+        if (mysqli_stmt_execute($stmt)) {
+            respons('success', 'Tugas berhasil dihapus');
+        } else {
+            respons('error', 'Gagal menghapus tugas');
+        }
+    }
+
+    // TOGGLE TASK COMPLETION
+    elseif ($aksi === 'toggle_selesai') {
+        $id = (int)($input['id'] ?? 0);
+
+        if (!$id) {
+            respons('error', 'ID tugas tidak valid');
+        }
+
+        // Get current status
+        $stmt = mysqli_prepare($conn, "SELECT sudah_selesai FROM tasks WHERE id = ? AND user_id = ?");
+        mysqli_stmt_bind_param($stmt, "ii", $id, $user_id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $task = mysqli_fetch_assoc($result);
+
+        if (!$task) {
+            respons('error', 'Tugas tidak ditemukan');
+        }
+
+        $new_status = $task['sudah_selesai'] ? 0 : 1;
+        $stmt = mysqli_prepare($conn, "UPDATE tasks SET sudah_selesai = ? WHERE id = ? AND user_id = ?");
+        mysqli_stmt_bind_param($stmt, "iii", $new_status, $id, $user_id);
+
+        if (mysqli_stmt_execute($stmt)) {
+            respons('success', 'Status tugas berhasil diperbarui', ['sudah_selesai' => $new_status]);
+        } else {
+            respons('error', 'Gagal memperbarui status');
+        }
+    }
+
+    // ADD SCHEDULE
+    elseif ($aksi === 'tambah_jadwal') {
+        $nama_jadwal = htmlspecialchars(trim($input['nama_jadwal'] ?? ''));
+        $tanggal = htmlspecialchars(trim($input['tanggal'] ?? ''));
+        $jam = htmlspecialchars(trim($input['jam'] ?? ''));
+        $kategori = htmlspecialchars(trim($input['kategori'] ?? 'pribadi'));
+
+        if (!$nama_jadwal || !$tanggal || !$jam) {
+            respons('error', 'Data jadwal tidak lengkap');
+        }
+
+        $stmt = mysqli_prepare($conn, "
+            INSERT INTO schedules (user_id, nama_jadwal, tanggal, jam, kategori) 
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        mysqli_stmt_bind_param($stmt, "issss", $user_id, $nama_jadwal, $tanggal, $jam, $kategori);
+
+        if (mysqli_stmt_execute($stmt)) {
+            $schedule_id = mysqli_insert_id($conn);
+            respons('success', 'Jadwal berhasil ditambahkan', ['id' => $schedule_id]);
+        } else {
+            respons('error', 'Gagal menambahkan jadwal');
+        }
+    }
+
+    // DELETE SCHEDULE
+    elseif ($aksi === 'hapus_jadwal') {
+        $id = (int)($input['id'] ?? 0);
+
+        if (!$id) {
+            respons('error', 'ID jadwal tidak valid');
+        }
+
+        $stmt = mysqli_prepare($conn, "DELETE FROM schedules WHERE id = ? AND user_id = ?");
+        mysqli_stmt_bind_param($stmt, "ii", $id, $user_id);
+
+        if (mysqli_stmt_execute($stmt)) {
+            respons('success', 'Jadwal berhasil dihapus');
+        } else {
+            respons('error', 'Gagal menghapus jadwal');
+        }
+    }
+
+    // UPDATE PROFILE
+    elseif ($aksi === 'update_profile') {
+        $nama = htmlspecialchars(trim($input['nama'] ?? ''));
+
+        if (!$nama) {
+            respons('error', 'Nama tidak boleh kosong');
+        }
+
+        $stmt = mysqli_prepare($conn, "UPDATE users SET nama = ? WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, "si", $nama, $user_id);
+
+        if (mysqli_stmt_execute($stmt)) {
+            $_SESSION['nama'] = $nama;
+            respons('success', 'Profil berhasil diperbarui');
+        } else {
+            respons('error', 'Gagal memperbarui profil');
+        }
+    }
+
+    // UPDATE DARK MODE
+    elseif ($aksi === 'update_dark_mode') {
+        $dark_mode = (int)($input['dark_mode'] ?? 0);
+
+        $stmt = mysqli_prepare($conn, "
+            INSERT INTO settings (user_id, dark_mode) VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE dark_mode = ?
+        ");
+        mysqli_stmt_bind_param($stmt, "iii", $user_id, $dark_mode, $dark_mode);
+
+        if (mysqli_stmt_execute($stmt)) {
+            respons('success', 'Dark mode berhasil diperbarui');
+        } else {
+            respons('error', 'Gagal memperbarui dark mode');
+        }
+    }
+
+    // UPDATE SETTINGS
+    elseif ($aksi === 'update_settings') {
+        $notifikasi = (int)($input['notifikasi'] ?? 1);
+
+        $stmt = mysqli_prepare($conn, "
+            INSERT INTO settings (user_id, notifikasi) VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE notifikasi = ?
+        ");
+        mysqli_stmt_bind_param($stmt, "iii", $user_id, $notifikasi, $notifikasi);
+
+        if (mysqli_stmt_execute($stmt)) {
+            respons('success', 'Settings berhasil diperbarui');
+        } else {
+            respons('error', 'Gagal memperbarui settings');
+        }
+    }
+
+    // UPLOAD PROFILE PHOTO
+    elseif ($aksi === 'upload_foto') {
+        if (!isset($_FILES['foto'])) {
+            respons('error', 'Tidak ada file yang dipilih');
+        }
+
+        $file = $_FILES['foto'];
+        $allowed = ['image/jpeg', 'image/jpg', 'image/png'];
+        $max_size = 2 * 1024 * 1024;
+
+        if ($file['size'] > $max_size) {
+            respons('error', 'Ukuran file terlalu besar (max 2MB)');
+        }
+
+        if (!in_array($file['type'], $allowed)) {
+            respons('error', 'Format file tidak didukung (hanya JPG, PNG)');
+        }
+
+        // Buat folder uploads jika belum ada
+        if (!is_dir('uploads')) {
+            mkdir('uploads', 0755, true);
+        }
+
+        $filename = 'user_' . $user_id . '_' . time() . '.' . pathinfo($file['name'], PATHINFO_EXTENSION);
+        $target_path = 'uploads/' . $filename;
+
+        if (move_uploaded_file($file['tmp_name'], $target_path)) {
+            $stmt = mysqli_prepare($conn, "UPDATE users SET foto_profil = ? WHERE id = ?");
+            mysqli_stmt_bind_param($stmt, "si", $target_path, $user_id);
+
+            if (mysqli_stmt_execute($stmt)) {
+                respons('success', 'Foto profil berhasil diupload', ['foto_profil' => $target_path]);
+            } else {
+                unlink($target_path);
+                respons('error', 'Gagal menyimpan foto profil');
+            }
+        } else {
+            respons('error', 'Gagal mengupload file');
+        }
+    }
+
+    // RESET ACCOUNT
+    elseif ($aksi === 'reset_akun') {
+        // Delete all tasks
+        $stmt = mysqli_prepare($conn, "DELETE FROM tasks WHERE user_id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $user_id);
+        mysqli_stmt_execute($stmt);
+
+        // Delete all schedules
+        $stmt = mysqli_prepare($conn, "DELETE FROM schedules WHERE user_id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $user_id);
+        mysqli_stmt_execute($stmt);
+
+        respons('success', 'Semua data akun berhasil direset');
+    }
+
+    else {
+        respons('error', 'Aksi tidak diketahui');
+    }
+}
+
+else {
+    respons('error', 'Method tidak didukung');
+}
+?>

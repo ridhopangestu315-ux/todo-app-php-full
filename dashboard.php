@@ -1,5 +1,6 @@
 <?php
 session_start();
+date_default_timezone_set('Asia/Jakarta');
 require 'koneksi.php';
 
 if (!isset($_SESSION['user_id'])) {
@@ -10,21 +11,16 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = (int)$_SESSION['user_id'];
 $nama_user = $_SESSION['nama'] ?? 'Mahasiswa';
 
-// === AMBIL DATA DENGAN PREPARED STATEMENT (AMAN) ===
-function getCount($conn, $sql, $user_id) {
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "i", $user_id);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $row = mysqli_fetch_assoc($result);
-    mysqli_stmt_close($stmt);
-    return $row['cnt'] ?? 0;
-}
+// Ambil data user dan settings
+$stmt = mysqli_prepare($conn, "SELECT nama, email, foto_profil FROM users WHERE id = ?");
+mysqli_stmt_bind_param($stmt, "i", $user_id);
+mysqli_stmt_execute($stmt);
+$user_data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?? [];
 
-$total_tugas = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ?", $user_id);
-$tugas_selesai = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND sudah_selesai = 1", $user_id);
-$tugas_hariini = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND deadline = CURDATE() AND sudah_selesai = 0", $user_id);
-$deadline_dekat = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 2 DAY) AND sudah_selesai = 0", $user_id);
+$stmt = mysqli_prepare($conn, "SELECT dark_mode, notifikasi FROM settings WHERE user_id = ?");
+mysqli_stmt_bind_param($stmt, "i", $user_id);
+mysqli_stmt_execute($stmt);
+$settings = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?? ['dark_mode' => 0, 'notifikasi' => 1];
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -36,7 +32,7 @@ $deadline_dekat = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_
   <link rel="stylesheet" href="style.css">
   <link rel="icon" type="image/png" href="icon1.PNG">
 </head>
-<body>
+<body class="<?= $settings['dark_mode'] ? 'mode-gelap' : '' ?>">
   <div class="latar-ambient" aria-hidden="true"></div>
   <div class="wadah-aplikasi">
 
@@ -83,8 +79,12 @@ $deadline_dekat = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_
             <span id="teksTanggalRealtime"></span>
             <small id="teksJamRealtime"></small>
           </div>
-          <div id="fotoProfilHeader" class="foto-profil-header foto-profil-header--klikable">
-            <span id="inisialProfilHeader"><?= strtoupper(substr($nama_user, 0, 1)) ?></span>
+          <div id="fotoProfilHeader" class="foto-profil-header foto-profil-header--klikable" style="cursor: pointer;">
+            <?php if($user_data['foto_profil']): ?>
+              <img src="<?= htmlspecialchars($user_data['foto_profil']) ?>" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">
+            <?php else: ?>
+              <span id="inisialProfilHeader"><?= strtoupper(substr($nama_user, 0, 1)) ?></span>
+            <?php endif; ?>
           </div>
         </div>
       </header>

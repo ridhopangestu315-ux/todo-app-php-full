@@ -1,20 +1,673 @@
-/*
-================================
-PENGATURAN NAMA DATA LOCAL STORAGE
-================================
-Bagian ini berisi nama tempat penyimpanan data di browser.
-LocalStorage dipakai agar data tetap ada setelah halaman direfresh.
-*/
-const namaPenyimpananLocalStorage = {
-  tugas: "studentTodoTasks",
-  jadwal: "studentCalendarEvents",
-  fotoProfil: "studentProfilePhoto",
-  namaPengguna: "studentTodoName",
-  modeGelap: "studentTodoDarkMode",
-  notifikasiDeadline: "studentTodoNotification",
-  // Kunci baru untuk menyimpan daftar mata kuliah buatan user
-  daftarMataKuliah: "studentTodoCourseList"
+/**
+ * ============================================
+ * STUDYFLOW - MAIN APPLICATION SCRIPT
+ * ============================================
+ * Aplikasi Todo Mahasiswa dengan Database MySQL
+ * Semua data disimpan di database, bukan localStorage
+ * Menggunakan AJAX Fetch API untuk komunikasi
+ */
+
+// ============================================
+// INISIALISASI APLIKASI
+// ============================================
+const app = {
+    apiUrl: 'api.php',
+    currentUser: null,
+    allTasks: [],
+    allSchedules: [],
+    currentPage: 'dashboard',
+    selectedDate: new Date(),
+    
+    // Inisialisasi aplikasi
+    init() {
+        this.setupEventListeners();
+        this.loadDashboard();
+        this.updateDateTime();
+        setInterval(() => this.updateDateTime(), 1000);
+        this.checkDarkMode();
+    },
+
+    // Setup semua event listeners
+    setupEventListeners() {
+        // Menu navigation
+        document.querySelectorAll('.tombol-menu').forEach(btn => {
+            btn.addEventListener('click', (e) => this.navigateToPage(e.target.closest('.tombol-menu').dataset.halaman));
+        });
+
+        // Mobile navigation
+        document.querySelectorAll('.tombol-nav-mobile').forEach(btn => {
+            btn.addEventListener('click', (e) => this.navigateToPage(e.target.closest('.tombol-nav-mobile').dataset.halaman));
+        });
+
+        // Quick action buttons
+        document.querySelectorAll('[data-quick-action]').forEach(btn => {
+            btn.addEventListener('click', () => this.handleQuickAction(btn.dataset.quickAction));
+        });
+
+        // Task form
+        const formTugas = document.getElementById('formTambahTugas');
+        if (formTugas) {
+            formTugas.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleTambahTugas();
+            });
+        }
+
+        // Task search and filter
+        const searchTugas = document.getElementById('inputPencarianTugas');
+        if (searchTugas) {
+            searchTugas.addEventListener('input', () => this.filterAndRenderTasks());
+        }
+
+        document.querySelectorAll('#filterStatusTugas').forEach(btn => {
+            if (btn) btn.addEventListener('change', () => this.filterAndRenderTasks());
+        });
+
+        // Schedule form
+        const formJadwal = document.getElementById('formTambahJadwal');
+        if (formJadwal) {
+            formJadwal.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleTambahJadwal();
+            });
+        }
+
+        // Settings
+        const toggleDarkMode = document.getElementById('toggleModeGelap');
+        if (toggleDarkMode) {
+            toggleDarkMode.addEventListener('change', () => this.toggleDarkMode());
+        }
+
+        const toggleNotifikasi = document.getElementById('toggleNotifikasiDeadline');
+        if (toggleNotifikasi) {
+            toggleNotifikasi.addEventListener('change', () => this.toggleNotifikasi());
+        }
+
+        const btnSimpanProfile = document.getElementById('tombolSimpanNama');
+        if (btnSimpanProfile) {
+            btnSimpanProfile.addEventListener('click', () => this.updateProfile());
+        }
+
+        const inputFotoProfil = document.getElementById('inputFotoProfil');
+        const btnUploadFoto = document.getElementById('tombolUploadFoto');
+        if (btnUploadFoto && inputFotoProfil) {
+            btnUploadFoto.addEventListener('click', () => inputFotoProfil.click());
+            inputFotoProfil.addEventListener('change', () => this.handleUploadFoto());
+        }
+
+        const btnResetData = document.getElementById('tombolResetData');
+        if (btnResetData) {
+            btnResetData.addEventListener('click', () => this.handleResetData());
+        }
+
+        // Calendar buttons
+        const btnBulanSebelumnya = document.getElementById('tombolBulanSebelumnya');
+        const btnBulanBerikutnya = document.getElementById('tombolBulanBerikutnya');
+        const btnHariIni = document.getElementById('tombolHariIni');
+
+        if (btnBulanSebelumnya) btnBulanSebelumnya.addEventListener('click', () => {
+            this.selectedDate.setMonth(this.selectedDate.getMonth() - 1);
+            this.renderCalendar();
+        });
+
+        if (btnBulanBerikutnya) btnBulanBerikutnya.addEventListener('click', () => {
+            this.selectedDate.setMonth(this.selectedDate.getMonth() + 1);
+            this.renderCalendar();
+        });
+
+        if (btnHariIni) btnHariIni.addEventListener('click', () => {
+            this.selectedDate = new Date();
+            this.renderCalendar();
+        });
+
+        // Close modals
+        document.querySelectorAll('[id^="tombolBatal"]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const modal = this.closest('[id^="modal"]');
+                if (modal) modal.style.display = 'none';
+            });
+        });
+    },
+
+    // ========== API CALLS ==========
+    async apiCall(aksi, method = 'GET', data = null) {
+        try {
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            let url = this.apiUrl + '?aksi=' + aksi;
+
+            if (method === 'GET') {
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        url += '&' + key + '=' + encodeURIComponent(data[key]);
+                    });
+                }
+            } else if (method === 'POST') {
+                options.body = JSON.stringify(data);
+            }
+
+            const response = await fetch(url, options);
+            const result = await response.json();
+
+            if (result.status === 'error') {
+                this.showToast(result.message, 'error');
+                return null;
+            }
+
+            return result.data;
+        } catch (error) {
+            console.error('API Error:', error);
+            this.showToast('Terjadi kesalahan jaringan', 'error');
+            return null;
+        }
+    },
+
+    // ========== DASHBOARD ==========
+    async loadDashboard() {
+        // Load all data
+        this.allTasks = await this.apiCall('ambil_tugas') || [];
+        this.allSchedules = await this.apiCall('ambil_jadwal') || [];
+        
+        this.renderDashboard();
+        this.renderMiniCalendar();
+    },
+
+    renderDashboard() {
+        const stats = {
+            total: this.allTasks.length,
+            selesai: this.allTasks.filter(t => t.sudah_selesai).length,
+            hariini: this.allTasks.filter(t => t.deadline === this.getTodayDate() && !t.sudah_selesai).length,
+            belum: this.allTasks.filter(t => !t.sudah_selesai).length
+        };
+
+        // Update statistics
+        document.getElementById('angkaTotalTugas').textContent = stats.total;
+        document.getElementById('angkaTugasSelesai').textContent = stats.selesai;
+        document.getElementById('angkaDeadlineDekat').textContent = this.allTasks.filter(t => {
+            const deadline = new Date(t.deadline);
+            const today = new Date();
+            const twoDaysFromNow = new Date(today);
+            twoDaysFromNow.setDate(today.getDate() + 2);
+            return deadline >= today && deadline <= twoDaysFromNow && !t.sudah_selesai;
+        }).length;
+        document.getElementById('angkaTugaBelumSelesai').textContent = stats.belum;
+        document.getElementById('angkaFokusHariIni').textContent = stats.hariini;
+
+        // Update progress
+        if (stats.hariini > 0) {
+            const selesaiHariini = this.allTasks.filter(t => t.deadline === this.getTodayDate() && t.sudah_selesai).length;
+            const persen = Math.round((selesaiHariini / stats.hariini) * 100);
+            document.getElementById('persenProgressHariIni').textContent = persen + '%';
+            document.getElementById('barProgressHariIni').style.width = persen + '%';
+            document.getElementById('teksProgressHariIni').textContent = selesaiHariini + ' dari ' + stats.hariini + ' tugas selesai';
+        }
+
+        // Update sidebar
+        document.getElementById('ringkasanSidebar').textContent = stats.hariini + ' tugas aktif';
+
+        // Render task lists
+        this.renderTaskList('daftarTugasHariIni', this.allTasks.filter(t => t.deadline === this.getTodayDate() && !t.sudah_selesai));
+        this.renderTaskList('daftarTugasBesok', this.allTasks.filter(t => t.deadline === this.getTomorrowDate() && !t.sudah_selesai));
+        
+        // Update counts
+        document.getElementById('jumlahTugasHariIni').textContent = stats.hariini;
+        document.getElementById('jumlahTugasBesok').textContent = this.allTasks.filter(t => t.deadline === this.getTomorrowDate() && !t.sudah_selesai).length;
+    },
+
+    renderTaskList(elementId, tasks) {
+        const container = document.getElementById(elementId);
+        if (!container) return;
+
+        if (tasks.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-faint); padding: 16px;">Tidak ada tugas</p>';
+            return;
+        }
+
+        container.innerHTML = tasks.map(task => `
+            <div class="item-ringkas" data-task-id="${task.id}">
+                <div class="info-ringkas">
+                    <strong>${this.escapeHtml(task.nama_tugas)}</strong>
+                    <small>${task.mata_kuliah || 'Tanpa mata kuliah'}</small>
+                </div>
+                <div class="aksi-ringkas">
+                    <button class="btn-check-tugas" onclick="app.toggleTaskCompletion(${task.id})">
+                        ${task.sudah_selesai ? '✓' : '○'}
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    // ========== TUGAS MANAGEMENT ==========
+    async handleTambahTugas() {
+        const nama = document.getElementById('inputNamaTugas')?.value.trim();
+        const mataKuliah = document.getElementById('pilihanMataKuliah')?.value.trim();
+        const deadline = document.getElementById('inputDeadlineTugas')?.value;
+
+        if (!nama || !deadline) {
+            this.showToast('Nama tugas dan deadline wajib diisi', 'error');
+            return;
+        }
+
+        const result = await this.apiCall('tambah_tugas', 'POST', {
+            nama_tugas: nama,
+            mata_kuliah: mataKuliah,
+            deadline: deadline
+        });
+
+        if (result) {
+            this.showToast('Tugas berhasil ditambahkan', 'success');
+            document.getElementById('inputNamaTugas').value = '';
+            document.getElementById('inputDeadlineTugas').value = '';
+            this.loadDashboard();
+        }
+    },
+
+    async toggleTaskCompletion(taskId) {
+        const result = await this.apiCall('toggle_selesai', 'POST', { id: taskId });
+        if (result) {
+            this.showToast('Status tugas berhasil diperbarui', 'success');
+            this.loadDashboard();
+        }
+    },
+
+    async deleteTask(taskId) {
+        if (!confirm('Hapus tugas ini?')) return;
+        
+        const result = await this.apiCall('hapus_tugas', 'POST', { id: taskId });
+        if (result) {
+            this.showToast('Tugas berhasil dihapus', 'success');
+            this.loadDashboard();
+        }
+    },
+
+    filterAndRenderTasks() {
+        const search = (document.getElementById('inputPencarianTugas')?.value || '').toLowerCase();
+        const filter = document.getElementById('filterStatusTugas')?.value || 'semua';
+
+        let filtered = this.allTasks;
+
+        if (filter === 'belum') {
+            filtered = filtered.filter(t => !t.sudah_selesai);
+        } else if (filter === 'selesai') {
+            filtered = filtered.filter(t => t.sudah_selesai);
+        }
+
+        if (search) {
+            filtered = filtered.filter(t => 
+                t.nama_tugas.toLowerCase().includes(search) ||
+                (t.mata_kuliah && t.mata_kuliah.toLowerCase().includes(search))
+            );
+        }
+
+        this.renderDaftarTugas(filtered);
+    },
+
+    renderDaftarTugas(tasks) {
+        const container = document.getElementById('daftarTugas');
+        if (!container) return;
+
+        if (tasks.length === 0) {
+            container.innerHTML = '<p style="text-align: center; padding: 32px; color: var(--text-faint);">Tidak ada tugas</p>';
+            return;
+        }
+
+        container.innerHTML = tasks.map(task => `
+            <div class="kartu-tugas ${task.sudah_selesai ? 'selesai' : ''}">
+                <div class="checkbox-tugas">
+                    <input type="checkbox" ${task.sudah_selesai ? 'checked' : ''} 
+                        onchange="app.toggleTaskCompletion(${task.id})">
+                </div>
+                <div class="konten-tugas">
+                    <h4>${this.escapeHtml(task.nama_tugas)}</h4>
+                    <div class="info-tugas">
+                        <span>${task.mata_kuliah || 'Tanpa mata kuliah'}</span>
+                        <span>${this.formatDate(task.deadline)}</span>
+                    </div>
+                </div>
+                <div class="aksi-tugas">
+                    <button onclick="app.deleteTask(${task.id})" class="btn-delete">
+                        Hapus
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    // ========== JADWAL MANAGEMENT ==========
+    async handleTambahJadwal() {
+        const nama = document.getElementById('inputNamaJadwal')?.value.trim();
+        const tanggal = document.getElementById('inputTanggalJadwal')?.value;
+        const jam = document.getElementById('inputJamJadwal')?.value;
+        const kategori = document.getElementById('pilihanKategoriJadwal')?.value;
+
+        if (!nama || !tanggal || !jam) {
+            this.showToast('Semua field harus diisi', 'error');
+            return;
+        }
+
+        const result = await this.apiCall('tambah_jadwal', 'POST', {
+            nama_jadwal: nama,
+            tanggal: tanggal,
+            jam: jam,
+            kategori: kategori
+        });
+
+        if (result) {
+            this.showToast('Jadwal berhasil ditambahkan', 'success');
+            document.getElementById('formTambahJadwal').reset();
+            document.getElementById('modalJadwal').style.display = 'none';
+            this.loadDashboard();
+        }
+    },
+
+    async deleteSchedule(scheduleId) {
+        if (!confirm('Hapus jadwal ini?')) return;
+        
+        const result = await this.apiCall('hapus_jadwal', 'POST', { id: scheduleId });
+        if (result) {
+            this.showToast('Jadwal berhasil dihapus', 'success');
+            this.loadDashboard();
+        }
+    },
+
+    // ========== KALENDER ==========
+    renderCalendar() {
+        const year = this.selectedDate.getFullYear();
+        const month = this.selectedDate.getMonth();
+
+        document.getElementById('teksBulanKalender').textContent = 
+            this.monthNames[month] + ' ' + year;
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        let html = '';
+        let dayCounter = 1;
+
+        // Isi hari sebelumnya
+        for (let i = 0; i < firstDay; i++) {
+            html += '<div class="hari-lain"></div>';
+        }
+
+        // Isi hari dalam bulan
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            const dateStr = this.formatDateForStorage(date);
+            const isToday = dateStr === this.getTodayDate();
+            
+            const eventsOnDay = this.allSchedules.filter(s => s.tanggal === dateStr).length +
+                               this.allTasks.filter(t => t.deadline === dateStr && !t.sudah_selesai).length;
+
+            html += `
+                <div class="hari-kalender ${isToday ? 'hari-ini' : ''}" onclick="app.selectDate('${dateStr}')">
+                    <div class="nomor-hari">${day}</div>
+                    ${eventsOnDay > 0 ? `<div class="badge-event">${eventsOnDay}</div>` : ''}
+                </div>
+            `;
+        }
+
+        document.getElementById('isiKalender').innerHTML = html;
+        this.updateAgendaHariIni();
+    },
+
+    renderMiniCalendar() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth();
+
+        document.getElementById('judulMiniKalender').textContent = 
+            this.monthNames[month] + ' ' + year;
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        let html = '';
+
+        for (let i = 0; i < firstDay; i++) {
+            html += '<div></div>';
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            const dateStr = this.formatDateForStorage(date);
+            const isToday = dateStr === this.getTodayDate();
+
+            html += `<div class="${isToday ? 'hari-ini' : ''}">${day}</div>`;
+        }
+
+        document.getElementById('isiMiniKalender').innerHTML = html;
+    },
+
+    selectDate(dateStr) {
+        document.getElementById('inputTanggalJadwal').value = dateStr;
+        document.getElementById('modalJadwal').style.display = 'flex';
+    },
+
+    updateAgendaHariIni() {
+        const today = this.getTodayDate();
+        const container = document.getElementById('daftarAgendaHariIni');
+        if (!container) return;
+
+        const jadwalHariIni = this.allSchedules.filter(s => s.tanggal === today);
+        const tugasHariIni = this.allTasks.filter(t => t.deadline === today && !t.sudah_selesai);
+
+        let html = '';
+
+        jadwalHariIni.forEach(jadwal => {
+            html += `
+                <div class="agenda-item">
+                    <strong>${this.escapeHtml(jadwal.nama_jadwal)}</strong>
+                    <small>${jadwal.jam}</small>
+                </div>
+            `;
+        });
+
+        tugasHariIni.forEach(tugas => {
+            html += `
+                <div class="agenda-item">
+                    <strong>${this.escapeHtml(tugas.nama_tugas)}</strong>
+                    <small>${tugas.mata_kuliah || 'Tugas'}</small>
+                </div>
+            `;
+        });
+
+        if (html === '') {
+            html = '<p style="color: var(--text-faint);">Tidak ada agenda hari ini</p>';
+        }
+
+        container.innerHTML = html;
+    },
+
+    // ========== SETTINGS ==========
+    async updateProfile() {
+        const nama = document.getElementById('inputNamaPengguna')?.value.trim();
+
+        if (!nama) {
+            this.showToast('Nama tidak boleh kosong', 'error');
+            return;
+        }
+
+        const result = await this.apiCall('update_profile', 'POST', { nama: nama });
+        if (result) {
+            this.showToast('Profil berhasil diperbarui', 'success');
+            document.getElementById('teksSapaan').textContent = 'Selamat datang kembali, ' + nama + ' 👋';
+        }
+    },
+
+    async handleUploadFoto() {
+        const input = document.getElementById('inputFotoProfil');
+        if (!input.files || !input.files[0]) return;
+
+        const file = input.files[0];
+        const maxSize = 2 * 1024 * 1024; // 2MB
+
+        if (file.size > maxSize) {
+            this.showToast('File terlalu besar (max 2MB)', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('aksi', 'upload_foto');
+        formData.append('foto', file);
+
+        try {
+            const response = await fetch(this.apiUrl, {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                this.showToast('Foto berhasil diupload', 'success');
+                location.reload();
+            } else {
+                this.showToast(result.message, 'error');
+            }
+        } catch (error) {
+            this.showToast('Gagal mengupload foto', 'error');
+        }
+    },
+
+    async toggleDarkMode() {
+        const isDarkMode = document.getElementById('toggleModeGelap').checked;
+        await this.apiCall('update_dark_mode', 'POST', { dark_mode: isDarkMode ? 1 : 0 });
+        document.body.classList.toggle('mode-gelap', isDarkMode);
+    },
+
+    async toggleNotifikasi() {
+        const enabled = document.getElementById('toggleNotifikasiDeadline').checked;
+        await this.apiCall('update_settings', 'POST', { notifikasi: enabled ? 1 : 0 });
+    },
+
+    async handleResetData() {
+        if (!confirm('Hapus semua data tugas dan jadwal? Tindakan ini tidak dapat dibatalkan!')) return;
+
+        const result = await this.apiCall('reset_akun', 'POST', {});
+        if (result) {
+            this.showToast('Semua data berhasil dihapus', 'success');
+            this.loadDashboard();
+        }
+    },
+
+    checkDarkMode() {
+        const isDark = document.body.classList.contains('mode-gelap');
+        const toggle = document.getElementById('toggleModeGelap');
+        if (toggle) toggle.checked = isDark;
+    },
+
+    // ========== UI HELPERS ==========
+    navigateToPage(page) {
+        document.querySelectorAll('.halaman').forEach(h => h.classList.remove('halaman-aktif'));
+        document.getElementById(page).classList.add('halaman-aktif');
+
+        document.querySelectorAll('.tombol-menu').forEach(b => b.classList.remove('aktif'));
+        document.querySelector(`[data-halaman="${page}"]`).classList.add('aktif');
+
+        this.currentPage = page;
+
+        if (page === 'tugas') {
+            this.filterAndRenderTasks();
+        } else if (page === 'kalender') {
+            this.renderCalendar();
+        }
+    },
+
+    handleQuickAction(action) {
+        switch(action) {
+            case 'tambah-tugas':
+                this.navigateToPage('tugas');
+                break;
+            case 'tambah-jadwal':
+                document.getElementById('modalJadwal').style.display = 'flex';
+                break;
+            case 'lihat-kalender':
+                this.navigateToPage('kalender');
+                break;
+            case 'fokus-hari-ini':
+                this.navigateToPage('tugas');
+                break;
+        }
+    },
+
+    showToast(message, type = 'info') {
+        const container = document.getElementById('wadahToast');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = 'toast toast-' + type;
+        toast.textContent = message;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 10);
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    },
+
+    updateDateTime() {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        
+        document.getElementById('teksTanggalRealtime').textContent = 
+            now.toLocaleDateString('id-ID', options);
+        document.getElementById('teksJamRealtime').textContent = 
+            now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    },
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
+
+    formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('id-ID', { 
+            day: 'numeric', 
+            month: 'short', 
+            year: 'numeric' 
+        });
+    },
+
+    formatDateForStorage(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return year + '-' + month + '-' + day;
+    },
+
+    getTodayDate() {
+        return this.formatDateForStorage(new Date());
+    },
+
+    getTomorrowDate() {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return this.formatDateForStorage(tomorrow);
+    },
+
+    monthNames: [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ]
 };
+
+// ============================================
+// INISIALISASI SAAT DOM READY
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+    app.init();
+});
 
 const aturanFotoProfil = {
   ukuranMaksimal: 2 * 1024 * 1024,
