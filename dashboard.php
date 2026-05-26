@@ -1,0 +1,535 @@
+<?php
+session_start();
+require 'koneksi.php';
+
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+$user_id = (int)$_SESSION['user_id'];
+$nama_user = $_SESSION['nama'] ?? 'Mahasiswa';
+
+// === AMBIL DATA DENGAN PREPARED STATEMENT (AMAN) ===
+function getCount($conn, $sql, $user_id) {
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $user_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $row = mysqli_fetch_assoc($result);
+    mysqli_stmt_close($stmt);
+    return $row['cnt'] ?? 0;
+}
+
+$total_tugas = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ?", $user_id);
+$tugas_selesai = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND sudah_selesai = 1", $user_id);
+$tugas_hariini = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND deadline = CURDATE() AND sudah_selesai = 0", $user_id);
+$deadline_dekat = getCount($conn, "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 2 DAY) AND sudah_selesai = 0", $user_id);
+?>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyFlow - Dashboard Mahasiswa</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="icon1.PNG">
+</head>
+<body>
+  <div class="latar-ambient" aria-hidden="true"></div>
+  <div class="wadah-aplikasi">
+
+    <!-- Sidebar -->
+    <aside class="menu-samping">
+      <div class="identitas-aplikasi">
+        <span class="ikon-aplikasi">SF</span>
+        <div>
+          <h2>StudyFlow</h2>
+          <p>Student workspace</p>
+        </div>
+      </div>
+
+      <nav class="daftar-menu">
+        <button class="tombol-menu aktif" type="button" data-halaman="dashboard">
+          <span class="ikon-menu">⌂</span><span>Dashboard</span>
+        </button>
+        <button class="tombol-menu" type="button" data-halaman="tugas">
+          <span class="ikon-menu">□</span><span>Tugas</span>
+        </button>
+        <button class="tombol-menu" type="button" data-halaman="kalender">
+          <span class="ikon-menu">◷</span><span>Kalender</span>
+        </button>
+        <button class="tombol-menu" type="button" data-halaman="pengaturan">
+          <span class="ikon-menu">⚙</span><span>Pengaturan</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-insight">
+        <span class="label-mini">Hari ini</span>
+        <strong id="ringkasanSidebar"><?= $tugas_hariini ?> tugas aktif</strong>
+        <p>Atur ritme belajarmu tanpa bikin dashboard terasa penuh.</p>
+      </div>
+    </aside>
+
+    <main class="konten-utama">
+      <header class="kepala-halaman">
+        <div class="kepala-copy">
+          <p class="teks-kecil">Catatan Tugas Mahasiswa</p>
+          <h1 id="teksSapaan">Selamat datang kembali, <?= htmlspecialchars($nama_user) ?> 👋</h1>
+        </div>
+        <div class="header-actions">
+          <div class="tanggal-header">
+            <span id="teksTanggalRealtime"></span>
+            <small id="teksJamRealtime"></small>
+          </div>
+          <div id="fotoProfilHeader" class="foto-profil-header foto-profil-header--klikable">
+            <span id="inisialProfilHeader"><?= strtoupper(substr($nama_user, 0, 1)) ?></span>
+          </div>
+        </div>
+      </header>
+
+      <section id="dashboard" class="halaman halaman-aktif">
+        <section class="hero-dashboard">
+          <div class="hero-copy">
+            <span class="pill-status">Workspace aktif</span>
+            <h2 id="teksSapaanHero">Selamat datang kembali, User 👋</h2>
+            <p id="teksTanggalHero">Rabu, 20 Mei 2026</p>
+            <div class="hero-progress">
+              <div class="progress-meta">
+                <span>Progress tugas hari ini</span>
+                <strong id="persenProgressHariIni">0%</strong>
+              </div>
+              <div class="progress-track" aria-label="Progress produktivitas">
+                <span id="barProgressHariIni" class="progress-fill"></span>
+              </div>
+              <small id="teksProgressHariIni">Belum ada tugas selesai hari ini.</small>
+            </div>
+          </div>
+
+          <div class="hero-panel">
+            <span class="label-mini">Fokus hari ini</span>
+            <strong id="angkaFokusHariIni">0</strong>
+            <p>Tugas dengan deadline hari ini.</p>
+          </div>
+        </section>
+
+        <section class="section-dashboard">
+          <div class="section-heading">
+            <div>
+              <p class="teks-kecil">Aksi cepat</p>
+              <h2>Mulai dari sini</h2>
+            </div>
+          </div>
+          <div class="grid-aksi-cepat">
+            <button class="kartu-aksi" type="button" data-quick-action="tambah-tugas">
+              <span class="ikon-aksi">＋</span>
+              <strong>Tambah Tugas</strong>
+              <small>Catat deadline baru</small>
+            </button>
+            <button class="kartu-aksi" type="button" data-quick-action="tambah-jadwal">
+              <span class="ikon-aksi">◷</span>
+              <strong>Tambah Jadwal</strong>
+              <small>Buat agenda kuliah</small>
+            </button>
+            <button class="kartu-aksi" type="button" data-quick-action="lihat-kalender">
+              <span class="ikon-aksi">▦</span>
+              <strong>Lihat Kalender</strong>
+              <small>Cek ritme bulan ini</small>
+            </button>
+            <button class="kartu-aksi" type="button" data-quick-action="fokus-hari-ini">
+              <span class="ikon-aksi">◎</span>
+              <strong>Fokus Hari Ini</strong>
+              <small>Kerjakan prioritas utama</small>
+            </button>
+          </div>
+        </section>
+
+        <section class="section-dashboard">
+          <div class="section-heading">
+            <div>
+              <p class="teks-kecil">Statistik</p>
+              <h2>Snapshot produktivitas</h2>
+            </div>
+          </div>
+          <div class="grid-statistik">
+            <article class="kartu-statistik warna-biru">
+              <span class="ikon-statistik">□</span>
+              <p>Total tugas</p>
+              <h3 id="angkaTotalTugas">0</h3>
+            </article>
+            <article class="kartu-statistik warna-merah">
+              <span class="ikon-statistik">!</span>
+              <p>Deadline dekat</p>
+              <h3 id="angkaDeadlineDekat">0</h3>
+            </article>
+            <article class="kartu-statistik warna-hijau">
+              <span class="ikon-statistik">✓</span>
+              <p>Tugas selesai</p>
+              <h3 id="angkaTugasSelesai">0</h3>
+            </article>
+            <article class="kartu-statistik warna-ungu">
+              <span class="ikon-statistik">↗</span>
+              <p>Progress mingguan</p>
+              <h3 id="angkaTugasBelumSelesai">0</h3>
+            </article>
+          </div>
+        </section>
+
+        <section class="dashboard-grid-utama">
+          <div class="kolom-dashboard">
+            <section class="panel panel-tugas-dashboard">
+              <div class="kepala-panel">
+                <div>
+                  <p class="teks-kecil">Tugas</p>
+                  <h3>Deadline Hari Ini</h3>
+                </div>
+                <span class="badge-panel" id="jumlahTugasHariIni">0</span>
+              </div>
+              <div id="daftarTugasHariIni" class="daftar-ringkas"></div>
+            </section>
+
+            <section class="panel panel-tugas-dashboard">
+              <div class="kepala-panel">
+                <div>
+                  <p class="teks-kecil">Berikutnya</p>
+                  <h3>Deadline Besok</h3>
+                </div>
+                <span class="badge-panel" id="jumlahTugasBesok">0</span>
+              </div>
+              <div id="daftarTugasBesok" class="daftar-ringkas"></div>
+            </section>
+
+            <section class="panel panel-tugas-dashboard">
+              <div class="kepala-panel">
+                <div>
+                  <p class="teks-kecil">Selesai</p>
+                  <h3>Tugas Selesai</h3>
+                </div>
+                <span class="badge-panel" id="jumlahTugasSelesaiDashboard">0</span>
+              </div>
+              <div id="daftarTugasSelesaiDashboard" class="daftar-ringkas"></div>
+            </section>
+
+            <section class="panel panel-tugas-dashboard">
+              <div class="kepala-panel">
+                <div>
+                  <p class="teks-kecil">Terbaru</p>
+                  <h3>Tugas Terbaru</h3>
+                </div>
+              </div>
+              <div id="daftarTugasTerbaru" class="daftar-ringkas"></div>
+            </section>
+          </div>
+
+          <aside class="kolom-dashboard kolom-kanan">
+            <section class="panel panel-kalender-preview">
+              <div class="kepala-panel">
+                <div>
+                  <p class="teks-kecil">Kalender</p>
+                  <h3>Preview bulan ini</h3>
+                </div>
+                <button class="tombol-kedua tombol-mini" type="button" data-quick-action="lihat-kalender">Buka</button>
+              </div>
+              <div class="mini-calendar">
+                <div id="judulMiniKalender" class="judul-mini-kalender">Mei 2026</div>
+                <div class="mini-calendar-days" aria-hidden="true">
+                  <span>M</span><span>S</span><span>S</span><span>R</span><span>K</span><span>J</span><span>S</span>
+                </div>
+                <div id="isiMiniKalender" class="mini-calendar-grid"></div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="kepala-panel">
+                <div>
+                  <p class="teks-kecil">Reminder</p>
+                  <h3>Deadline dekat</h3>
+                </div>
+              </div>
+              <div id="daftarNotifikasiDeadline" class="daftar-ringkas"></div>
+            </section>
+          </aside>
+        </section>
+      </section>
+
+      <section id="tugas" class="halaman">
+        <div class="judul-bagian">
+          <div>
+            <p class="teks-kecil">Kelola</p>
+            <h2>Daftar Tugas</h2>
+          </div>
+        </div>
+
+        <form id="formTambahTugas" class="form-tugas" novalidate>
+          <div class="grup-form">
+            <label for="inputNamaTugas">Nama tugas</label>
+            <input type="text" id="inputNamaTugas" placeholder="Contoh: Laporan praktikum" autocomplete="off">
+            <small id="pesanErrorNamaTugas" class="pesan-error"></small>
+          </div>
+
+          <div class="grup-form">
+            <label for="pilihanMataKuliah">Mata kuliah</label>
+            <select id="pilihanMataKuliah">
+              <option value="">Pilih mata kuliah</option>
+            </select>
+            <small id="pesanErrorMataKuliah" class="pesan-error"></small>
+          </div>
+
+          <div class="grup-form">
+            <label for="inputDeadlineTugas">Deadline</label>
+            <input type="date" id="inputDeadlineTugas">
+            <small id="pesanErrorDeadlineTugas" class="pesan-error"></small>
+          </div>
+
+          <button class="tombol-utama" type="submit">Tambah Tugas</button>
+        </form>
+
+        <div class="alat-filter-tugas">
+          <div class="search-wrapper">
+            <span>⌕</span>
+            <input type="search" id="inputPencarianTugas" placeholder="Cari tugas atau mata kuliah">
+          </div>
+          <select id="filterStatusTugas">
+            <option value="semua">Semua tugas</option>
+            <option value="belum">Belum selesai</option>
+            <option value="selesai">Selesai</option>
+          </select>
+        </div>
+
+        <div id="daftarTugas" class="daftar-tugas"></div>
+      </section>
+
+      <section id="kalender" class="halaman">
+        <div class="judul-bagian">
+          <div>
+            <p class="teks-kecil">Agenda</p>
+            <h2>Kalender Mahasiswa</h2>
+          </div>
+          <button id="tombolTambahJadwalCepat" class="tombol-utama" type="button">Tambah Jadwal</button>
+        </div>
+
+        <div class="layout-kalender">
+          <section class="kartu-kalender">
+            <div class="toolbar-kalender">
+              <div>
+                <p class="teks-kecil">Kalender Bulanan</p>
+                <h3 id="teksBulanKalender">Mei 2026</h3>
+              </div>
+              <div class="aksi-kalender">
+                <button id="tombolBulanSebelumnya" class="tombol-ikon" type="button" aria-label="Bulan sebelumnya">‹</button>
+                <button id="tombolHariIni" class="tombol-kedua" type="button">Hari ini</button>
+                <button id="tombolBulanBerikutnya" class="tombol-ikon" type="button" aria-label="Bulan berikutnya">›</button>
+              </div>
+            </div>
+
+            <div class="filter-kalender">
+              <label for="filterKategoriJadwal">Filter kategori</label>
+              <select id="filterKategoriJadwal">
+                <option value="semua">Semua kategori</option>
+                <option value="kuliah">Kuliah</option>
+                <option value="organisasi">Organisasi</option>
+                <option value="ujian">Ujian</option>
+                <option value="pribadi">Pribadi</option>
+                <option value="deadline">Deadline tugas</option>
+              </select>
+            </div>
+
+            <div class="kalender-scroll-wrapper">
+              <div class="nama-hari-kalender" aria-hidden="true">
+                <span>Min</span>
+                <span>Sen</span>
+                <span>Sel</span>
+                <span>Rab</span>
+                <span>Kam</span>
+                <span>Jum</span>
+                <span>Sab</span>
+              </div>
+              <div id="isiKalender" class="isi-kalender"></div>
+            </div>
+          </section>
+
+          <aside class="sisi-agenda">
+            <section class="panel">
+              <h3>Agenda Hari Ini</h3>
+              <div id="daftarAgendaHariIni" class="daftar-agenda"></div>
+            </section>
+
+            <section class="panel">
+              <h3>Reminder Deadline</h3>
+              <div id="daftarReminderDeadline" class="daftar-agenda"></div>
+            </section>
+          </aside>
+        </div>
+      </section>
+
+      <section id="pengaturan" class="halaman">
+        <div class="judul-bagian">
+          <div>
+            <p class="teks-kecil">Preferensi</p>
+            <h2>Pengaturan</h2>
+          </div>
+        </div>
+
+        <div class="grid-pengaturan">
+          <section class="panel">
+            <h3>Profil</h3>
+            <div class="pengaturan-profil">
+              <div id="previewFotoProfil" class="preview-foto-profil" aria-label="Preview foto profil">
+                <span id="inisialPreviewProfil">R</span>
+              </div>
+              <div class="aksi-profil">
+                <input type="file" id="inputFotoProfil" accept="image/png, image/jpeg, image/jpg" hidden>
+                <button id="tombolUploadFoto" class="tombol-kedua" type="button">Upload Foto</button>
+                <button id="tombolHapusFoto" class="tombol-kecil tombol-hapus" type="button">Hapus Foto</button>
+              </div>
+            </div>
+            <small id="pesanErrorFotoProfil" class="pesan-error-foto"></small>
+            <label for="inputNamaPengguna">Nama kamu</label>
+            <input type="text" id="inputNamaPengguna" placeholder="Masukkan nama kamu" autocomplete="off">
+            <button id="tombolSimpanNama" class="tombol-utama" type="button">Simpan Nama</button>
+          </section>
+
+          <section class="panel">
+            <h3>Tampilan</h3>
+            <label class="baris-switch" for="toggleModeGelap">
+              <span>Aktifkan dark mode</span>
+              <input type="checkbox" id="toggleModeGelap">
+            </label>
+          </section>
+
+          <section class="panel">
+            <h3>Notifikasi</h3>
+            <label class="baris-switch" for="toggleNotifikasiDeadline">
+              <span>Peringatan deadline dekat</span>
+              <input type="checkbox" id="toggleNotifikasiDeadline">
+            </label>
+          </section>
+
+          <section class="panel panel-mata-kuliah" id="panelMataKuliah">
+            <h3>Mata Kuliah</h3>
+            <p class="teks-kecil-panel">Tambahkan mata kuliah kamu. Daftar ini otomatis muncul di form tambah tugas.</p>
+
+            <div class="form-tambah-mata-kuliah">
+              <div class="grup-form">
+                <label for="inputNamaMataKuliah">Nama mata kuliah</label>
+                <input type="text" id="inputNamaMataKuliah" placeholder="Contoh: Pemrograman Mobile" autocomplete="off" maxlength="80">
+                <small id="pesanErrorMataKuliahBaru" class="pesan-error"></small>
+              </div>
+              <button id="tombolTambahMataKuliah" class="tombol-utama" type="button">Tambah</button>
+            </div>
+
+            <div id="daftarMataKuliahPengaturan" class="daftar-mata-kuliah-pengaturan"></div>
+          </section>
+
+          <section class="panel panel-bahaya">
+            <h3>Data</h3>
+            <p>Hapus semua tugas yang tersimpan di browser ini.</p>
+            <button id="tombolResetData" class="tombol-bahaya" type="button">Hapus Semua Tugas</button>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modalKonfirmasi" class="lapisan-modal" aria-hidden="true">
+    <div class="modal-konfirmasi" role="dialog" aria-modal="true" aria-labelledby="judulModalKonfirmasi" aria-describedby="pesanModalKonfirmasi">
+      <div class="ikon-modal" aria-hidden="true">!</div>
+      <div class="isi-modal">
+        <p class="teks-kecil">Konfirmasi</p>
+        <h2 id="judulModalKonfirmasi">Hapus semua tugas?</h2>
+        <p id="pesanModalKonfirmasi">Data tugas yang sudah dihapus tidak dapat dikembalikan.</p>
+      </div>
+      <div class="aksi-modal">
+        <button id="tombolBatalKonfirmasi" class="tombol-modal tombol-modal-kedua" type="button">Batal</button>
+        <button id="tombolSetujuKonfirmasi" class="tombol-modal tombol-modal-bahaya" type="button">Hapus</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalJadwal" class="lapisan-modal" aria-hidden="true">
+    <form id="formTambahJadwal" class="modal-jadwal" role="dialog" aria-modal="true" aria-labelledby="judulModalJadwal" novalidate>
+      <div class="isi-modal">
+        <p class="teks-kecil">Jadwal Baru</p>
+        <h2 id="judulModalJadwal">Tambah Jadwal</h2>
+        <p id="teksTanggalJadwalDipilih">Pilih tanggal pada kalender.</p>
+      </div>
+
+      <div class="grup-form">
+        <label for="inputNamaJadwal">Nama kegiatan</label>
+        <input type="text" id="inputNamaJadwal" placeholder="Contoh: Diskusi kelompok" autocomplete="off">
+        <small id="pesanErrorNamaJadwal" class="pesan-error"></small>
+      </div>
+
+      <div class="baris-form">
+        <div class="grup-form">
+          <label for="inputTanggalJadwal">Tanggal</label>
+          <input type="date" id="inputTanggalJadwal">
+          <small id="pesanErrorTanggalJadwal" class="pesan-error"></small>
+        </div>
+
+        <div class="grup-form">
+          <label for="inputJamJadwal">Jam</label>
+          <input type="time" id="inputJamJadwal">
+          <small id="pesanErrorJamJadwal" class="pesan-error"></small>
+        </div>
+      </div>
+
+      <div class="grup-form">
+        <label for="pilihanKategoriJadwal">Kategori</label>
+        <select id="pilihanKategoriJadwal">
+          <option value="kuliah">Kuliah</option>
+          <option value="organisasi">Organisasi</option>
+          <option value="ujian">Ujian</option>
+          <option value="pribadi">Pribadi</option>
+        </select>
+      </div>
+
+      <div class="aksi-modal">
+        <button id="tombolBatalJadwal" class="tombol-modal tombol-modal-kedua" type="button">Batal</button>
+        <button class="tombol-modal tombol-modal-utama" type="submit">Simpan Jadwal</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="modalDetailTanggal" class="lapisan-modal" aria-hidden="true">
+    <div class="modal-detail-jadwal" role="dialog" aria-modal="true" aria-labelledby="judulModalDetail">
+      <div class="kepala-modal-detail">
+        <div>
+          <p class="teks-kecil">Jadwal di Tanggal</p>
+          <h2 id="judulModalDetail">15 Mei 2026</h2>
+        </div>
+        <button id="tombolTutupDetailTanggal" class="tombol-tutup-modal" type="button">×</button>
+      </div>
+
+      <div id="daftarJadwalDetailTanggal" class="daftar-jadwal-detail"></div>
+      <button id="tombolTambahJadwalDariDetail" class="tombol-tambah-di-modal" type="button">Tambah jadwal di tanggal ini</button>
+    </div>
+  </div>
+
+  <button id="tombolTambahCepatMobile" class="tombol-tambah-cepat" type="button" aria-label="Tambah tugas cepat">+</button>
+  <div id="wadahToast" class="wadah-toast" aria-live="polite" aria-atomic="true"></div>
+
+  <nav class="bottom-navigation-mobile" aria-label="Navigasi mobile">
+    <button class="tombol-nav-mobile aktif" type="button" data-halaman="dashboard">
+      <span>⌂</span>
+      <small>Dashboard</small>
+    </button>
+    <button class="tombol-nav-mobile" type="button" data-halaman="tugas">
+      <span>□</span>
+      <small>Tugas</small>
+    </button>
+    <button class="tombol-nav-mobile" type="button" data-halaman="kalender">
+      <span>◷</span>
+      <small>Kalender</small>
+    </button>
+    <button class="tombol-nav-mobile" type="button" data-halaman="pengaturan">
+      <span>⚙</span>
+      <small>Pengaturan</small>
+    </button>
+  </nav>
+
+  <button id="tombolTambahMobile" class="tombol-tambah-mobile" type="button" aria-label="Tambah tugas">+</button>
+  <script src="script.js"></script>
+</body>
+</html>
