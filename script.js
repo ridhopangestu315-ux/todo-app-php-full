@@ -736,43 +736,134 @@
     });
   }
 
-  // --- HAPUS AKUN PERMANEN ---
-  var tombolHapusAkun = document.getElementById('tombolHapusAkun');
-  var grupHapusAkun   = document.getElementById('grupHapusAkun');
-  var tahapKonfirmasi = false;
+  // --- HAPUS AKUN PERMANEN (Modal 2 Langkah) ---
+  var SVG_EYE_OPEN   = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var SVG_EYE_CLOSED = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-6.5 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 
+  var modalHapusAkun       = document.getElementById('modalHapusAkun');
+  var langkah1             = document.getElementById('hapusAkunLangkah1');
+  var langkah2             = document.getElementById('hapusAkunLangkah2');
+  var tombolHapusAkun      = document.getElementById('tombolHapusAkun');
+  var tombolBatal1         = document.getElementById('tombolBatalHapusAkun1');
+  var tombolLanjut         = document.getElementById('tombolLanjutHapusAkun');
+  var tombolBatal2         = document.getElementById('tombolBatalHapusAkun2');
+  var tombolKonfirmasi     = document.getElementById('tombolKonfirmasiHapusAkun');
+  var inputPassHapus       = document.getElementById('inputPasswordHapusAkun');
+  var toggleMataHapus      = document.querySelector('[data-toggle-password-hapus]');
+
+  function bukaModalHapus() {
+    if (!modalHapusAkun) return;
+    // Reset ke langkah 1
+    if (langkah1) langkah1.style.display = '';
+    if (langkah2) langkah2.style.display = 'none';
+    if (inputPassHapus) inputPassHapus.value = '';
+    pesan('pesanHapusAkun', '', true);
+    modalHapusAkun.classList.add('tampil');
+    modalHapusAkun.setAttribute('aria-hidden', 'false');
+  }
+
+  function tutupModalHapus() {
+    if (!modalHapusAkun) return;
+    modalHapusAkun.classList.remove('tampil');
+    modalHapusAkun.setAttribute('aria-hidden', 'true');
+    if (inputPassHapus) inputPassHapus.value = '';
+    pesan('pesanHapusAkun', '', true);
+    // Reset tombol jika sempat disabled
+    if (tombolKonfirmasi) {
+      tombolKonfirmasi.disabled = false;
+      tombolKonfirmasi.textContent = 'Hapus Akun Saya';
+    }
+  }
+
+  // Buka modal dari tombol di panel
   if (tombolHapusAkun) {
-    tombolHapusAkun.addEventListener('click', function () {
-      if (!tahapKonfirmasi) {
-        // Tahap 1: tampilkan input password
-        tahapKonfirmasi = true;
-        if (grupHapusAkun) grupHapusAkun.style.display = '';
-        tombolHapusAkun.textContent = 'Ya, Hapus Akun Saya';
-        tombolHapusAkun.style.opacity = '1';
-        return;
-      }
+    tombolHapusAkun.addEventListener('click', bukaModalHapus);
+  }
 
-      // Tahap 2: kirim
-      var password = (document.getElementById('inputPasswordHapusAkun') || {}).value || '';
+  // Langkah 1 → Batal
+  if (tombolBatal1) {
+    tombolBatal1.addEventListener('click', tutupModalHapus);
+  }
+
+  // Langkah 1 → Lanjut ke langkah 2
+  if (tombolLanjut) {
+    tombolLanjut.addEventListener('click', function () {
+      if (langkah1) langkah1.style.display = 'none';
+      if (langkah2) langkah2.style.display = '';
+      if (inputPassHapus) inputPassHapus.focus();
+    });
+  }
+
+  // Langkah 2 → Kembali ke langkah 1
+  if (tombolBatal2) {
+    tombolBatal2.addEventListener('click', function () {
+      if (langkah1) langkah1.style.display = '';
+      if (langkah2) langkah2.style.display = 'none';
+      pesan('pesanHapusAkun', '', true);
+    });
+  }
+
+  // Toggle mata di modal hapus akun
+  if (toggleMataHapus) {
+    toggleMataHapus.addEventListener('click', function () {
+      if (!inputPassHapus) return;
+      var show = inputPassHapus.type === 'password';
+      inputPassHapus.type = show ? 'text' : 'password';
+      toggleMataHapus.setAttribute('aria-pressed', show ? 'true' : 'false');
+      toggleMataHapus.querySelector('span').innerHTML = show ? SVG_EYE_CLOSED : SVG_EYE_OPEN;
+    });
+  }
+
+  // Langkah 2 → Konfirmasi & hapus akun
+  if (tombolKonfirmasi) {
+    tombolKonfirmasi.addEventListener('click', function () {
+      var password = inputPassHapus ? inputPassHapus.value : '';
       pesan('pesanHapusAkun', '', true);
 
       if (!password) {
-        return pesan('pesanHapusAkun', 'Masukkan password untuk konfirmasi.', true);
+        pesan('pesanHapusAkun', 'Masukkan password untuk konfirmasi.', true);
+        if (inputPassHapus) inputPassHapus.focus();
+        return;
       }
 
-      tombolHapusAkun.disabled = true;
-      tombolHapusAkun.textContent = 'Menghapus...';
+      tombolKonfirmasi.disabled = true;
+      tombolKonfirmasi.textContent = 'Menghapus...';
+      if (tombolBatal2) tombolBatal2.disabled = true;
 
       kirimJSON('hapus_akun', { password_konfirmasi: password }, function (res) {
         if (res.status === 'success') {
-          // Redirect ke login setelah akun dihapus
-          window.location.href = 'login.php?hapus=sukses';
+          // Tutup modal, tampilkan notif sebentar lalu redirect
+          tutupModalHapus();
+          showToast('Akun berhasil dihapus. Sampai jumpa! 👋', 'success');
+          window.setTimeout(function () {
+            window.location.href = 'login.php';
+          }, 1800);
         } else {
-          tombolHapusAkun.disabled = false;
-          tombolHapusAkun.textContent = 'Ya, Hapus Akun Saya';
+          tombolKonfirmasi.disabled = false;
+          tombolKonfirmasi.textContent = 'Hapus Akun Saya';
+          if (tombolBatal2) tombolBatal2.disabled = false;
           pesan('pesanHapusAkun', res.message, true);
+          if (inputPassHapus) {
+            inputPassHapus.value = '';
+            inputPassHapus.focus();
+          }
         }
       });
     });
   }
+
+  // Tutup modal saat klik latar belakang
+  if (modalHapusAkun) {
+    modalHapusAkun.addEventListener('click', function (e) {
+      if (e.target === modalHapusAkun) tutupModalHapus();
+    });
+  }
+
+  // Tutup modal dengan Escape
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && modalHapusAkun && modalHapusAkun.classList.contains('tampil')) {
+      tutupModalHapus();
+    }
+  });
+
 })();

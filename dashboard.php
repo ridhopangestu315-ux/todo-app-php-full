@@ -638,15 +638,15 @@ function kalenderUrl($bulan, $kategori) {
             <p class="teks-kecil-panel">Gunakan password yang kuat dan belum pernah dipakai di tempat lain.</p>
             <div class="grup-form">
               <label for="inputPasswordLama">Password lama</label>
-              <input type="password" id="inputPasswordLama" placeholder="Password saat ini" autocomplete="current-password">
+              <div class="password-field"><input type="password" id="inputPasswordLama" placeholder="Password saat ini" autocomplete="current-password"><button class="password-toggle" type="button" data-toggle-password aria-label="Tampilkan password" aria-pressed="false"><span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span></button></div>
             </div>
             <div class="grup-form">
               <label for="inputPasswordBaru">Password baru</label>
-              <input type="password" id="inputPasswordBaru" placeholder="Minimal 6 karakter" autocomplete="new-password">
+              <div class="password-field"><input type="password" id="inputPasswordBaru" placeholder="Minimal 6 karakter" autocomplete="new-password"><button class="password-toggle" type="button" data-toggle-password aria-label="Tampilkan password" aria-pressed="false"><span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span></button></div>
             </div>
             <div class="grup-form">
               <label for="inputKonfirmasiPassword">Konfirmasi password baru</label>
-              <input type="password" id="inputKonfirmasiPassword" placeholder="Ulangi password baru" autocomplete="new-password">
+              <div class="password-field"><input type="password" id="inputKonfirmasiPassword" placeholder="Ulangi password baru" autocomplete="new-password"><button class="password-toggle" type="button" data-toggle-password aria-label="Tampilkan password" aria-pressed="false"><span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span></button></div>
             </div>
             <small id="pesanGantiPassword" class="pesan-error"></small>
             <button id="tombolGantiPassword" class="tombol-utama" type="button">Simpan Password</button>
@@ -661,7 +661,7 @@ function kalenderUrl($bulan, $kategori) {
             </div>
             <div class="grup-form">
               <label for="inputPasswordKonfirmasiEmail">Konfirmasi dengan password</label>
-              <input type="password" id="inputPasswordKonfirmasiEmail" placeholder="Password kamu" autocomplete="current-password">
+              <div class="password-field"><input type="password" id="inputPasswordKonfirmasiEmail" placeholder="Password kamu" autocomplete="current-password"><button class="password-toggle" type="button" data-toggle-password aria-label="Tampilkan password" aria-pressed="false"><span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span></button></div>
             </div>
             <small id="pesanGantiEmail" class="pesan-error"></small>
             <button id="tombolGantiEmail" class="tombol-utama" type="button">Simpan Email</button>
@@ -674,11 +674,6 @@ function kalenderUrl($bulan, $kategori) {
             <hr style="margin:1rem 0;border-color:var(--warna-border)">
             <h3>Hapus Akun</h3>
             <p>Akun, semua tugas, jadwal, dan data akan dihapus permanen dan <strong>tidak bisa dipulihkan</strong>.</p>
-            <div class="grup-form" id="grupHapusAkun" style="display:none">
-              <label for="inputPasswordHapusAkun">Konfirmasi password</label>
-              <input type="password" id="inputPasswordHapusAkun" placeholder="Masukkan password kamu">
-              <small id="pesanHapusAkun" class="pesan-error"></small>
-            </div>
             <button id="tombolHapusAkun" class="tombol-bahaya" type="button">Hapus Akun Permanen</button>
           </section>
 
@@ -695,6 +690,50 @@ function kalenderUrl($bulan, $kategori) {
     </main>
   </div>
 
+
+  <!-- MODAL HAPUS AKUN PERMANEN (2 langkah) -->
+  <div id="modalHapusAkun" class="lapisan-modal" aria-hidden="true">
+    <div class="modal-hapus-akun modal-konfirmasi" role="dialog" aria-modal="true" aria-labelledby="judulModalHapusAkun">
+
+      <!-- LANGKAH 1: Peringatan -->
+      <div id="hapusAkunLangkah1">
+        <div class="ikon-modal ikon-modal-bahaya" aria-hidden="true">⚠</div>
+        <div class="isi-modal">
+          <p class="teks-kecil">Tindakan Berbahaya</p>
+          <h2 id="judulModalHapusAkun">Hapus Akun Permanen?</h2>
+          <p id="pesanModalHapusAkun">Semua data kamu termasuk tugas, jadwal, dan mata kuliah akan <strong>dihapus selamanya</strong> dan tidak bisa dipulihkan. Yakin ingin melanjutkan?</p>
+        </div>
+        <div class="aksi-modal">
+          <button id="tombolBatalHapusAkun1" class="tombol-modal tombol-modal-kedua" type="button">Batal, Jangan Hapus</button>
+          <button id="tombolLanjutHapusAkun" class="tombol-modal tombol-modal-bahaya" type="button">Lanjutkan →</button>
+        </div>
+      </div>
+
+      <!-- LANGKAH 2: Konfirmasi Password -->
+      <div id="hapusAkunLangkah2" style="display:none">
+        <div class="ikon-modal ikon-modal-bahaya" aria-hidden="true">🔑</div>
+        <div class="isi-modal">
+          <p class="teks-kecil">Langkah 2 dari 2</p>
+          <h2>Konfirmasi Password</h2>
+          <p>Masukkan password akun kamu untuk membuktikan ini benar-benar kamu.</p>
+        </div>
+        <div class="grup-form" style="margin: 0 0 8px;">
+          <div class="password-field">
+            <input type="password" id="inputPasswordHapusAkun" placeholder="Masukkan password kamu" autocomplete="current-password">
+            <button class="password-toggle" type="button" data-toggle-password-hapus aria-label="Tampilkan password" aria-pressed="false">
+              <span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span>
+            </button>
+          </div>
+          <small id="pesanHapusAkun" class="pesan-error"></small>
+        </div>
+        <div class="aksi-modal">
+          <button id="tombolBatalHapusAkun2" class="tombol-modal tombol-modal-kedua" type="button">← Kembali</button>
+          <button id="tombolKonfirmasiHapusAkun" class="tombol-modal tombol-modal-bahaya" type="button">Hapus Akun Saya</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
   <div id="modalKonfirmasi" class="lapisan-modal" aria-hidden="true"><div class="modal-konfirmasi" role="dialog" aria-modal="true" aria-labelledby="judulModalKonfirmasi" aria-describedby="pesanModalKonfirmasi"><div class="ikon-modal" aria-hidden="true">!</div><div class="isi-modal"><p class="teks-kecil">Konfirmasi</p><h2 id="judulModalKonfirmasi">Konfirmasi aksi</h2><p id="pesanModalKonfirmasi">Lanjutkan aksi ini?</p></div><div class="aksi-modal"><button id="tombolBatalKonfirmasi" class="tombol-modal tombol-modal-kedua" type="button">Batal</button><button id="tombolSetujuKonfirmasi" class="tombol-modal tombol-modal-bahaya" type="button">Lanjutkan</button></div></div></div>
   <div id="modalJadwal" class="lapisan-modal" aria-hidden="true"><form id="formTambahJadwal" class="modal-jadwal" role="dialog" aria-modal="true" aria-labelledby="judulModalJadwal" novalidate><div class="isi-modal"><p class="teks-kecil">Jadwal Baru</p><h2 id="judulModalJadwal">Tambah Jadwal</h2><p id="teksTanggalJadwalDipilih">Pilih tanggal pada kalender.</p></div><div class="grup-form"><label for="inputNamaJadwal">Nama kegiatan</label><input type="text" id="inputNamaJadwal" placeholder="Contoh: Diskusi kelompok" autocomplete="off"><small id="pesanErrorNamaJadwal" class="pesan-error"></small></div><div class="baris-form"><div class="grup-form"><label for="inputTanggalJadwal">Tanggal</label><input type="date" id="inputTanggalJadwal"><small id="pesanErrorTanggalJadwal" class="pesan-error"></small></div><div class="grup-form"><label for="inputJamJadwal">Jam</label><input type="time" id="inputJamJadwal"><small id="pesanErrorJamJadwal" class="pesan-error"></small></div></div><div class="grup-form"><label for="pilihanKategoriJadwal">Kategori</label><select id="pilihanKategoriJadwal"><option value="kuliah">Kuliah</option><option value="organisasi">Organisasi</option><option value="ujian">Ujian</option><option value="pribadi">Pribadi</option></select></div><div class="aksi-modal"><button id="tombolBatalJadwal" class="tombol-modal tombol-modal-kedua" type="button">Batal</button><button class="tombol-modal tombol-modal-utama" type="submit">Simpan Jadwal</button></div></form></div>
   <div id="modalDetailTanggal" class="lapisan-modal" aria-hidden="true"><div class="modal-detail-jadwal" role="dialog" aria-modal="true" aria-labelledby="judulModalDetail"><div class="kepala-modal-detail"><div><p class="teks-kecil">Jadwal di Tanggal</p><h2 id="judulModalDetail">Detail tanggal</h2></div><button id="tombolTutupDetailTanggal" class="tombol-tutup-modal" type="button">×</button></div><div id="daftarJadwalDetailTanggal" class="daftar-jadwal-detail"></div><button id="tombolTambahJadwalDariDetail" class="tombol-tambah-di-modal" type="button">Tambah jadwal di tanggal ini</button></div></div>
@@ -717,6 +756,18 @@ function kalenderUrl($bulan, $kategori) {
       notifikasi: <?= (int)$settings['notifikasi'] ?>,
       flashLogin: <?= json_encode($flash_login) ?>
     };
+
+  // Toggle mata di panel pengaturan
+  document.querySelectorAll('[data-toggle-password]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var inp = btn.closest('.password-field').querySelector('input');
+      var show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+      btn.setAttribute('aria-label', show ? 'Sembunyikan password' : 'Tampilkan password');
+      btn.querySelector('span').innerHTML = show ? '<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#666\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M17.94 17.94A10.07 10.07 0 0 1 12 20c-6.5 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94\"\/><path d=\"M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19\"\/><line x1=\"1\" y1=\"1\" x2=\"23\" y2=\"23\"\/><\/svg>' : '<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#666\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/><\/svg>';
+    });
+  });
   </script>
   <script src="script.js?v=20260526-ssr-mobile"></script>
 </body>

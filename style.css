@@ -4708,22 +4708,76 @@ body.mode-gelap .kategori-deadline.badge-kategori-agenda   { color: #fb7185; bac
 
 .panel-keamanan .teks-kecil-panel {
   margin-top: 4px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .panel-keamanan .grup-form {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .panel-keamanan .tombol-utama {
-  margin-top: 6px;
+  margin-top: 8px;
   width: 100%;
 }
 
 .panel-keamanan .pesan-error {
   display: block;
-  margin-top: -6px;
-  margin-bottom: 4px;
+  margin-top: -4px;
+  margin-bottom: 6px;
+  min-height: 18px;
+}
+
+/* Password field dengan tombol mata di pengaturan */
+.panel-keamanan .password-field,
+.panel-bahaya .password-field {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.panel-keamanan .password-field input,
+.panel-bahaya .password-field input {
+  width: 100%;
+  padding-right: 52px;
+  box-sizing: border-box;
+}
+
+.panel-keamanan .password-toggle,
+.panel-bahaya .password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  display: grid;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  place-items: center;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #888;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.14s ease;
+}
+
+.panel-keamanan .password-toggle:hover,
+.panel-bahaya .password-toggle:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.panel-keamanan .password-toggle svg,
+.panel-bahaya .password-toggle svg {
+  display: block;
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: opacity 0.14s ease;
+}
+
+.panel-keamanan .password-toggle:hover svg,
+.panel-bahaya .password-toggle:hover svg {
+  opacity: 0.8;
 }
 
 /* Hapus Akun — grup input muncul saat konfirmasi */
@@ -4770,4 +4824,147 @@ body.mode-gelap .panel-keamanan {
 
 body.mode-gelap #grupHapusAkun input {
   border-color: rgba(251, 113, 133, 0.3);
+}
+
+/* SVG eye icon di password toggle — hitam putih, tidak mencolok */
+.password-toggle svg,
+.auth-card .password-toggle svg {
+  display: block;
+  flex-shrink: 0;
+  opacity: 0.45;
+  transition: opacity 0.15s ease;
+}
+
+.password-toggle:hover svg,
+.auth-card .password-toggle:hover svg {
+  opacity: 0.75;
+}
+
+[aria-pressed="true"].password-toggle svg,
+.auth-card [aria-pressed="true"].password-toggle svg {
+  opacity: 0.6;
+}
+
+/* Tombol mata di auth — background transparan, tidak mencolok */
+.auth-card .password-toggle {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.auth-card .password-toggle:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Mobile: panel keamanan spacing lebih lega */
+@media (max-width: 600px) {
+  .panel-keamanan .grup-form {
+    margin-bottom: 16px;
+  }
+
+  .panel-keamanan .tombol-utama {
+    margin-top: 12px;
+  }
+
+  .panel-keamanan,
+  .panel-bahaya {
+    padding: 20px 16px;
+  }
+}
+
+/* ============================================
+   MODAL HAPUS AKUN PERMANEN
+   ============================================ */
+.modal-hapus-akun {
+  max-width: 420px;
+  width: 100%;
+}
+
+.modal-hapus-akun .isi-modal p {
+  margin-top: 8px;
+  color: var(--text-soft);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ikon-modal-bahaya {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  margin: 0 auto 16px;
+  border-radius: 16px;
+  background: rgba(225, 29, 72, 0.1);
+  color: var(--red, #e11d48);
+  font-size: 24px;
+  font-weight: 900;
+}
+
+/* Input password di dalam modal hapus akun */
+.modal-hapus-akun .password-field {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.modal-hapus-akun .password-field input {
+  width: 100%;
+  padding-right: 52px;
+  box-sizing: border-box;
+  border-color: rgba(225, 29, 72, 0.3);
+}
+
+.modal-hapus-akun .password-field input:focus {
+  border-color: var(--red, #e11d48);
+  box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.12);
+}
+
+.modal-hapus-akun .password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  display: grid;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  place-items: center;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.14s ease;
+}
+
+.modal-hapus-akun .password-toggle:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.modal-hapus-akun .password-toggle svg {
+  display: block;
+  opacity: 0.5;
+}
+
+/* Langkah indikator di modal */
+#hapusAkunLangkah2 .teks-kecil {
+  color: var(--red, #e11d48);
+  font-weight: 800;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .modal-hapus-akun {
+    margin: 0 12px;
+  }
+
+  .modal-hapus-akun .aksi-modal {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .modal-hapus-akun .aksi-modal .tombol-modal {
+    width: 100%;
+  }
 }
