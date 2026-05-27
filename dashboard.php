@@ -62,6 +62,33 @@ function punyaKolom($conn, $table, $column) {
     return $exists;
 }
 
+function pastikanTabelCourses($conn) {
+    mysqli_query($conn, "
+        CREATE TABLE IF NOT EXISTS courses (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            user_id INT NOT NULL,
+            nama_mata_kuliah VARCHAR(100) NOT NULL,
+            dibuat_pada TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uniq_user_course (user_id, nama_mata_kuliah),
+            INDEX idx_user_id (user_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ");
+
+    if (!punyaKolom($conn, 'courses', 'nama_mata_kuliah')) {
+        mysqli_query($conn, "ALTER TABLE courses ADD COLUMN nama_mata_kuliah VARCHAR(100) NULL AFTER user_id");
+        if (punyaKolom($conn, 'courses', 'nama_matkul')) {
+            mysqli_query($conn, "UPDATE courses SET nama_mata_kuliah = nama_matkul WHERE nama_mata_kuliah IS NULL OR nama_mata_kuliah = ''");
+        }
+    }
+
+    if (!punyaKolom($conn, 'courses', 'dibuat_pada')) {
+        mysqli_query($conn, "ALTER TABLE courses ADD COLUMN dibuat_pada TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP");
+        if (punyaKolom($conn, 'courses', 'created_at')) {
+            mysqli_query($conn, "UPDATE courses SET dibuat_pada = created_at WHERE dibuat_pada IS NULL");
+        }
+    }
+}
+
 function tanggalKode($date = null) {
     return ($date ?: new DateTime())->format('Y-m-d');
 }
@@ -168,6 +195,8 @@ function renderAgendaItem($item) {
         ' . $button . '
       </article>';
 }
+
+pastikanTabelCourses($conn);
 
 $user_data = ambilSatu($conn, "SELECT nama, email, foto_profil FROM users WHERE id = ?", 'i', [$user_id]) ?: [];
 $settings = ambilSatu($conn, "SELECT dark_mode, notifikasi FROM settings WHERE user_id = ?", 'i', [$user_id]);
@@ -295,26 +324,7 @@ $reminderDeadline = array_values(array_filter($itemsKalender, function ($item) {
     return $diff >= 0 && $diff <= 2;
 }));
 
-$coursesDefault = [
-    'Analisis dan Perancangan Sistem',
-    'Grafika Komputer',
-    'Interaksi Manusia dan Komputer',
-    'Jaringan Komputer',
-    'Pendidikan Agama Islam',
-    'Pemrograman Web',
-    'Praktikum Jaringan Komputer',
-    'Praktikum PBO',
-    'Sistem Rekayasa Berkelanjutan',
-    'Statistika Untuk Komputasi'
-];
-$courseSet = array_fill_keys($coursesDefault, true);
-foreach ($tasks as $task) {
-    if (!empty($task['mata_kuliah'])) {
-        $courseSet[$task['mata_kuliah']] = true;
-    }
-}
-$courses = array_keys($courseSet);
-sort($courses, SORT_NATURAL | SORT_FLAG_CASE);
+$courses = ambilSemua($conn, "SELECT id, nama_mata_kuliah FROM courses WHERE user_id = ? ORDER BY nama_mata_kuliah ASC", 'i', [$user_id]);
 
 function kalenderUrl($bulan, $kategori) {
     return 'dashboard.php?halaman=kalender&bulan=' . urlencode($bulan) . '&kategori=' . urlencode($kategori);
@@ -454,7 +464,7 @@ function kalenderUrl($bulan, $kategori) {
         <div class="judul-bagian"><div><p class="teks-kecil">Kelola</p><h2>Daftar Tugas</h2></div></div>
         <form id="formTambahTugas" class="form-tugas" novalidate>
           <div class="grup-form"><label for="inputNamaTugas">Nama tugas</label><input type="text" id="inputNamaTugas" placeholder="Contoh: Laporan praktikum" autocomplete="off"><small id="pesanErrorNamaTugas" class="pesan-error"></small></div>
-          <div class="grup-form"><label for="pilihanMataKuliah">Mata kuliah</label><select id="pilihanMataKuliah"><option value="">Pilih mata kuliah</option><?php foreach ($courses as $course): ?><option value="<?= e($course) ?>"><?= e($course) ?></option><?php endforeach; ?></select><small id="pesanErrorMataKuliah" class="pesan-error"></small></div>
+          <div class="grup-form"><label for="pilihanMataKuliah">Mata kuliah</label><select id="pilihanMataKuliah"><option value=""><?= $courses ? 'Pilih mata kuliah' : 'Tambahkan mata kuliah terlebih dahulu' ?></option><?php foreach ($courses as $course): ?><option value="<?= e($course['nama_mata_kuliah']) ?>"><?= e($course['nama_mata_kuliah']) ?></option><?php endforeach; ?></select><small id="pesanErrorMataKuliah" class="pesan-error"></small></div>
           <div class="grup-form"><label for="inputDeadlineTugas">Deadline</label><input type="date" id="inputDeadlineTugas" min="<?= e($today) ?>"><small id="pesanErrorDeadlineTugas" class="pesan-error"></small></div>
           <button class="tombol-utama" type="submit">Tambah Tugas</button>
         </form>
@@ -530,7 +540,7 @@ function kalenderUrl($bulan, $kategori) {
           </section>
           <section class="panel"><h3>Tampilan</h3><p class="teks-kecil-panel">Mode tampilan mengikuti tombol di header dan tersimpan otomatis.</p><button id="tombolModeGelapPengaturan" class="tombol-mode-pengaturan" type="button" data-toggle-mode-gelap aria-pressed="<?= (int)$settings['dark_mode'] ? 'true' : 'false' ?>"><span class="ikon-mode-gelap" aria-hidden="true"><?= (int)$settings['dark_mode'] ? '☀' : '🌙' ?></span><span class="label-mode-gelap"><?= (int)$settings['dark_mode'] ? 'Gunakan light mode' : 'Gunakan dark mode' ?></span></button></section>
           <section class="panel"><h3>Notifikasi</h3><label class="baris-switch" for="toggleNotifikasiDeadline"><span>Peringatan deadline dekat</span><input type="checkbox" id="toggleNotifikasiDeadline" <?= (int)$settings['notifikasi'] ? 'checked' : '' ?>></label></section>
-          <section class="panel panel-mata-kuliah" id="panelMataKuliah"><h3>Mata Kuliah</h3><p class="teks-kecil-panel">Tambahkan mata kuliah kamu. Daftar ini otomatis muncul di form tambah tugas.</p><div class="form-tambah-mata-kuliah"><div class="grup-form"><label for="inputNamaMataKuliah">Nama mata kuliah</label><input type="text" id="inputNamaMataKuliah" placeholder="Contoh: Pemrograman Mobile" autocomplete="off" maxlength="80"><small id="pesanErrorMataKuliahBaru" class="pesan-error"></small></div><button id="tombolTambahMataKuliah" class="tombol-utama" type="button">Tambah</button></div><div id="daftarMataKuliahPengaturan" class="daftar-mata-kuliah-pengaturan"></div></section>
+          <section class="panel panel-mata-kuliah" id="panelMataKuliah"><h3>Mata Kuliah</h3><p class="teks-kecil-panel">Tambahkan mata kuliah kamu. Daftar ini otomatis muncul di form tambah tugas.</p><div class="form-tambah-mata-kuliah"><div class="grup-form"><label for="inputNamaMataKuliah">Nama mata kuliah</label><input type="text" id="inputNamaMataKuliah" placeholder="Contoh: Pemrograman Mobile" autocomplete="off" maxlength="80"><small id="pesanErrorMataKuliahBaru" class="pesan-error"></small></div><button id="tombolTambahMataKuliah" class="tombol-utama" type="button">Tambah</button></div><div id="daftarMataKuliahPengaturan" class="daftar-mata-kuliah-pengaturan"><?php if ($courses): foreach ($courses as $course): ?><div class="item-mata-kuliah" data-course-id="<?= (int)$course['id'] ?>"><span class="nama-mata-kuliah-item"><?= e($course['nama_mata_kuliah']) ?></span><button class="tombol-hapus-mata-kuliah" type="button" data-course-remove="<?= (int)$course['id'] ?>">Hapus</button></div><?php endforeach; else: ?><div class="kotak-kosong-mata-kuliah"><span class="ikon-kosong-mata-kuliah">+</span>Belum ada mata kuliah. Tambahkan mata kuliah terlebih dahulu.</div><?php endif; ?></div></section>
           <section class="panel panel-bahaya"><h3>Data</h3><p>Hapus semua tugas dan jadwal dari akun ini.</p><button id="tombolResetData" class="tombol-bahaya" type="button">Hapus Semua Data</button></section>
           <section class="panel panel-akun"><h3>Akun</h3><p>Keluar dari sesi StudyFlow di perangkat ini.</p><a class="tombol-logout" href="logout.php" aria-label="Logout dari StudyFlow"><span class="ikon-logout" aria-hidden="true">&#x21AA;</span><span>Logout</span></a></section>
         </div>
@@ -559,7 +569,6 @@ function kalenderUrl($bulan, $kategori) {
       modeGelap: <?= (int)$settings['dark_mode'] ?>,
       notifikasi: <?= (int)$settings['notifikasi'] ?>
     };
-    window.studyflowCourses = <?= json_encode($courses, JSON_UNESCAPED_UNICODE) ?>;
   </script>
   <script src="script.js?v=20260526-ssr-mobile"></script>
 </body>

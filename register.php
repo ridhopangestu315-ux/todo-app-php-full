@@ -1,6 +1,9 @@
 <?php 
 require 'koneksi.php'; 
-if (isset($_SESSION['user_id'])) header("Location: index.php");
+if (isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit;
+}
 
 $error = '';
 $success = false;
@@ -57,16 +60,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daftar - StudyFlow</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20260527-auth-modern">
 </head>
-<body>
-<div class="wadah-aplikasi" style="min-height:100vh;display:flex;align-items:center;justify-content:center">
-  <div class="panel" style="width:380px">
-    <div class="identitas-aplikasi" style="justify-content:center">
+<body class="auth-page">
+<div class="wadah-aplikasi auth-shell">
+  <div class="panel auth-card">
+    <div class="identitas-aplikasi auth-brand">
       <span class="ikon-aplikasi">SF</span>
       <h2>StudyFlow</h2>
     </div>
-    <h3 style="text-align:center">Buat Akun Baru</h3>
+    <div class="auth-heading">
+      <p class="teks-kecil">Mulai workspace kamu</p>
+      <h3>Buat Akun Baru</h3>
+    </div>
     
     <?php if($error): ?>
       <p style="color:#e11d48;text-align:center;background:#ffe4e6;padding:12px;border-radius:8px;margin-bottom:16px">
@@ -84,17 +90,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input type="email" name="email" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
       </div>
       <div class="grup-form">
-        <label>Password</label>
-        <input type="password" name="password" required minlength="6">
+        <label for="passwordRegister">Password</label>
+        <div class="password-field">
+          <input id="passwordRegister" type="password" name="password" required minlength="6">
+          <button class="password-toggle" type="button" data-toggle-password aria-label="Tampilkan password" aria-pressed="false">
+            <span aria-hidden="true">👁</span>
+          </button>
+        </div>
       </div>
       <div class="grup-form">
-        <label>Konfirmasi Password</label>
-        <input type="password" name="password_confirm" required minlength="6">
+        <label for="passwordConfirmRegister">Konfirmasi Password</label>
+        <div class="password-field">
+          <input id="passwordConfirmRegister" type="password" name="password_confirm" required minlength="6">
+          <button class="password-toggle" type="button" data-toggle-password aria-label="Tampilkan password" aria-pressed="false">
+            <span aria-hidden="true">👁</span>
+          </button>
+        </div>
       </div>
-      <button type="submit" class="tombol-utama" style="width:100%;margin-top:20px">Daftar</button>
+      <button type="submit" class="tombol-utama auth-submit">Daftar</button>
     </form>
-    <p style="text-align:center;margin-top:20px">Sudah punya akun? <a href="login.php">Login</a></p>
+    <p class="auth-switch">Sudah punya akun? <a href="login.php">Login</a></p>
   </div>
 </div>
+<script>
+document.querySelectorAll('[data-toggle-password]').forEach(function (button) {
+  button.addEventListener('click', function () {
+    var input = button.closest('.password-field').querySelector('input');
+    var show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    button.setAttribute('aria-pressed', show ? 'true' : 'false');
+    button.setAttribute('aria-label', show ? 'Sembunyikan password' : 'Tampilkan password');
+    button.querySelector('span').textContent = show ? '◉' : '👁';
+  });
+});
+</script>
 </body>
 </html>

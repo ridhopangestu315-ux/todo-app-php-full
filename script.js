@@ -69,23 +69,6 @@
   };
 
   const profile = window.studyflowUser || {};
-  const defaultCourses = window.studyflowCourses || [];
-  const storageKeys = {
-    courses: "studyflow_mata_kuliah"
-  };
-
-  function safeText(value) {
-    return String(value || "").replace(/[&<>"']/g, function (char) {
-      return {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;"
-      }[char];
-    });
-  }
-
   async function apiPost(action, data) {
     const formData = new FormData();
     formData.append("aksi", action);
@@ -281,62 +264,20 @@
     if (empty) empty.hidden = visible !== 0;
   }
 
-  function getStoredCourses() {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(storageKeys.courses) || "null");
-      if (Array.isArray(parsed)) return parsed.filter(Boolean);
-    } catch (error) {
-      localStorage.removeItem(storageKeys.courses);
-    }
-    return defaultCourses.slice();
-  }
-
-  function setStoredCourses(courses) {
-    localStorage.setItem(storageKeys.courses, JSON.stringify(courses));
-  }
-
-  function renderCourses() {
-    const courses = Array.from(new Set(getStoredCourses().map(function (course) {
-      return String(course).trim();
-    }).filter(Boolean))).sort(function (a, b) {
-      return a.localeCompare(b, "id-ID");
-    });
-
-    if (els.courseSelect) {
-      const current = els.courseSelect.value;
-      els.courseSelect.innerHTML = '<option value="">Pilih mata kuliah</option>' + courses.map(function (course) {
-        return '<option value="' + safeText(course) + '">' + safeText(course) + "</option>";
-      }).join("");
-      if (current) els.courseSelect.value = current;
-    }
-
-    if (els.courseList) {
-      els.courseList.innerHTML = courses.length
-        ? courses.map(function (course) {
-            return '<div class="item-mata-kuliah" data-course="' + safeText(course) + '"><span class="nama-mata-kuliah-item">' + safeText(course) + '</span><button class="tombol-hapus-mata-kuliah" type="button" data-course-remove="' + safeText(course) + '">Hapus</button></div>';
-          }).join("")
-        : '<div class="kotak-kosong-mata-kuliah"><span class="ikon-kosong-mata-kuliah">+</span>Belum ada mata kuliah.</div>';
-    }
-  }
-
-  function addCourse() {
+  async function addCourse() {
     const value = (els.courseInput?.value || "").trim();
     if (!value) {
       if (els.courseError) els.courseError.textContent = "Nama mata kuliah wajib diisi.";
       return;
     }
-
-    const courses = getStoredCourses();
-    if (courses.some(function (course) { return course.toLowerCase() === value.toLowerCase(); })) {
-      if (els.courseError) els.courseError.textContent = "Mata kuliah sudah ada.";
-      return;
-    }
-
-    courses.push(value);
-    setStoredCourses(courses);
-    if (els.courseInput) els.courseInput.value = "";
     if (els.courseError) els.courseError.textContent = "";
-    renderCourses();
+
+    try {
+      await apiPost("tambah_mata_kuliah", { nama_mata_kuliah: value });
+      reloadWithPage("pengaturan");
+    } catch (error) {
+      if (els.courseError) els.courseError.textContent = error.message;
+    }
   }
 
   function previewAvatar(file) {
@@ -600,11 +541,10 @@
     els.courseList?.addEventListener("click", function (event) {
       const button = event.target.closest("[data-course-remove]");
       if (!button) return;
-      const name = button.dataset.courseRemove;
-      setStoredCourses(getStoredCourses().filter(function (course) {
-        return course !== name;
-      }));
-      renderCourses();
+      openConfirm("Hapus mata kuliah?", "Mata kuliah ini akan dihapus dari daftar akunmu.", async function () {
+        await apiPost("hapus_mata_kuliah", { id: button.dataset.courseRemove });
+        reloadWithPage("pengaturan");
+      });
     });
 
     els.resetButton?.addEventListener("click", function () {
@@ -648,7 +588,6 @@
     if (els.nameInput) els.nameInput.value = profile.nama || "";
     if (els.notificationToggle) els.notificationToggle.checked = Boolean(Number(profile.notifikasi ?? 1));
     syncDarkButtons(document.body.classList.contains("mode-gelap"));
-    renderCourses();
     filterTasks();
     updateClock();
     window.setInterval(updateClock, 60000);

@@ -65,6 +65,35 @@ function punyaKolom($conn, $table, $column) {
     return $exists;
 }
 
+function pastikanTabelCourses($conn) {
+    mysqli_query($conn, "
+        CREATE TABLE IF NOT EXISTS courses (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            user_id INT NOT NULL,
+            nama_mata_kuliah VARCHAR(100) NOT NULL,
+            dibuat_pada TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uniq_user_course (user_id, nama_mata_kuliah),
+            INDEX idx_user_id (user_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ");
+
+    if (!punyaKolom($conn, 'courses', 'nama_mata_kuliah')) {
+        mysqli_query($conn, "ALTER TABLE courses ADD COLUMN nama_mata_kuliah VARCHAR(100) NULL AFTER user_id");
+        if (punyaKolom($conn, 'courses', 'nama_matkul')) {
+            mysqli_query($conn, "UPDATE courses SET nama_mata_kuliah = nama_matkul WHERE nama_mata_kuliah IS NULL OR nama_mata_kuliah = ''");
+        }
+    }
+
+    if (!punyaKolom($conn, 'courses', 'dibuat_pada')) {
+        mysqli_query($conn, "ALTER TABLE courses ADD COLUMN dibuat_pada TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP");
+        if (punyaKolom($conn, 'courses', 'created_at')) {
+            mysqli_query($conn, "UPDATE courses SET dibuat_pada = created_at WHERE dibuat_pada IS NULL");
+        }
+    }
+}
+
+pastikanTabelCourses($conn);
+
 // ============================================
 // GET REQUEST HANDLER
 // ============================================
@@ -153,6 +182,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         respons('success', 'Settings berhasil diambil', $settings);
     }
 
+    elseif ($aksi === 'ambil_mata_kuliah') {
+        $stmt = mysqli_prepare($conn, "
+            SELECT id, nama_mata_kuliah
+            FROM courses
+            WHERE user_id = ?
+            ORDER BY nama_mata_kuliah ASC
+        ");
+        mysqli_stmt_bind_param($stmt, "i", $user_id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $courses = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        respons('success', 'Mata kuliah berhasil diambil', $courses);
+    }
+
     // GET TASK BY ID
     elseif ($aksi === 'ambil_tugas_by_id') {
         $id = (int)($_GET['id'] ?? 0);
@@ -186,12 +229,20 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $mata_kuliah = inputTeks($input['mata_kuliah'] ?? '', 100);
         $deadline = inputTeks($input['deadline'] ?? '', 10);
 
-        if (!$nama_tugas || !$deadline) {
-            respons('error', 'Nama tugas dan deadline wajib diisi');
+        if (!$nama_tugas || !$mata_kuliah || !$deadline) {
+            respons('error', 'Nama tugas, mata kuliah, dan deadline wajib diisi');
         }
 
         if (!validTanggal($deadline)) {
             respons('error', 'Format deadline tidak valid');
+        }
+
+        $stmt = mysqli_prepare($conn, "SELECT id FROM courses WHERE user_id = ? AND nama_mata_kuliah = ?");
+        mysqli_stmt_bind_param($stmt, "is", $user_id, $mata_kuliah);
+        mysqli_stmt_execute($stmt);
+        $course = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+        if (!$course) {
+            respons('error', 'Tambahkan mata kuliah terlebih dahulu');
         }
 
         $stmt = mysqli_prepare($conn, "
@@ -460,6 +511,66 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             respons('error', 'Gagal mengupload file');
         }
+    }
+
+    elseif ($aksi === 'tambah_mata_kuliah') {
+        $nama_mata_kuliah = inputTeks($input['nama_mata_kuliah'] ?? '', 100);
+
+        if (!$nama_mata_kuliah) {
+            respons('error', 'Nama mata kuliah wajib diisi');
+        }
+
+        $stmt = mysqli_prepare($conn, "SELECT id FROM courses WHERE user_id = ? AND nama_mata_kuliah = ?");
+        mysqli_stmt_bind_param($stmt, "is", $user_id, $nama_mata_kuliah);
+        mysqli_stmt_execute($stmt);
+        $course = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+        if ($course) {
+            respons('error', 'Mata kuliah sudah ada');
+        }
+
+        if (punyaKolom($conn, 'courses', 'nama_matkul')) {
+            $stmt = mysqli_prepare($conn, "
+                INSERT INTO courses (user_id, nama_mata_kuliah, nama_matkul)
+                VALUES (?, ?, ?)
+            ");
+            mysqli_stmt_bind_param($stmt, "iss", $user_id, $nama_mata_kuliah, $nama_mata_kuliah);
+        } else {
+            $stmt = mysqli_prepare($conn, "
+                INSERT INTO courses (user_id, nama_mata_kuliah)
+                VALUES (?, ?)
+            ");
+            mysqli_stmt_bind_param($stmt, "is", $user_id, $nama_mata_kuliah);
+        }
+
+        if (mysqli_stmt_execute($stmt)) {
+            respons('success', 'Mata kuliah berhasil ditambahkan', [
+                'id' => mysqli_insert_id($conn),
+                'nama_mata_kuliah' => $nama_mata_kuliah
+            ]);
+        }
+
+        if (mysqli_errno($conn) == 1062) {
+            respons('error', 'Mata kuliah sudah ada');
+        }
+
+        respons('error', 'Gagal menambahkan mata kuliah');
+    }
+
+    elseif ($aksi === 'hapus_mata_kuliah') {
+        $id = (int)($input['id'] ?? 0);
+
+        if (!$id) {
+            respons('error', 'ID mata kuliah tidak valid');
+        }
+
+        $stmt = mysqli_prepare($conn, "DELETE FROM courses WHERE id = ? AND user_id = ?");
+        mysqli_stmt_bind_param($stmt, "ii", $id, $user_id);
+
+        if (mysqli_stmt_execute($stmt)) {
+            respons('success', 'Mata kuliah berhasil dihapus');
+        }
+
+        respons('error', 'Gagal menghapus mata kuliah');
     }
 
     elseif ($aksi === 'hapus_foto') {
