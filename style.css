@@ -4395,3 +4395,302 @@ body.mode-gelap .notif-auth-sukses {
     border-radius: 10px;
   }
 }
+
+/* ============================================
+   KALENDER: MULTI-DOT INDIKATOR PER KATEGORI
+   ============================================ */
+.grup-titik-jadwal {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: nowrap;
+}
+
+.titik-jadwal {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Warna titik per kategori */
+.titik-kuliah     { background: #2563eb; box-shadow: 0 0 4px rgba(37,99,235,0.5); }
+.titik-organisasi { background: #16a34a; box-shadow: 0 0 4px rgba(22,163,74,0.5); }
+.titik-ujian      { background: #d97706; box-shadow: 0 0 4px rgba(217,119,6,0.5); }
+.titik-pribadi    { background: #7c3aed; box-shadow: 0 0 4px rgba(124,58,237,0.5); }
+.titik-deadline   { background: #e11d48; box-shadow: 0 0 4px rgba(225,29,72,0.5); }
+
+/* ============================================
+   PANEL AGENDA LENGKAP (sidebar kalender)
+   ============================================ */
+.panel-agenda-lengkap {
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.kepala-agenda-lengkap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.kepala-agenda-lengkap h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.badge-jumlah-agenda {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(79,70,229,0.12);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.daftar-agenda-lengkap {
+  max-height: 620px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.daftar-agenda-lengkap::-webkit-scrollbar {
+  width: 4px;
+}
+.daftar-agenda-lengkap::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+}
+
+/* Grup per tanggal */
+.grup-agenda-tanggal {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--line);
+  transition: background 0.15s;
+}
+
+.grup-agenda-tanggal:last-child {
+  border-bottom: none;
+}
+
+.grup-agenda-hari-ini {
+  background: rgba(79, 70, 229, 0.05);
+  border-left: 3px solid var(--primary);
+}
+
+.grup-agenda-lampau {
+  opacity: 0.6;
+}
+
+.label-tanggal-agenda {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.teks-tanggal-agenda {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.badge-hari-ini {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.daftar-agenda-per-tanggal {
+  display: grid;
+  gap: 8px;
+}
+
+/* Item agenda baru */
+.item-agenda-baru {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border-radius: 14px;
+  background: var(--surface);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  transition: transform 0.15s, box-shadow 0.15s;
+  position: relative;
+}
+
+.item-agenda-baru:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+.garis-kategori-agenda {
+  width: 4px;
+  flex-shrink: 0;
+  border-radius: 0;
+  background: var(--warna-jadwal, var(--primary));
+}
+
+.kategori-kuliah     .garis-kategori-agenda { background: #2563eb; }
+.kategori-organisasi .garis-kategori-agenda { background: #16a34a; }
+.kategori-ujian      .garis-kategori-agenda { background: #d97706; }
+.kategori-pribadi    .garis-kategori-agenda { background: #7c3aed; }
+.kategori-deadline   .garis-kategori-agenda { background: #e11d48; }
+
+.konten-agenda-baru {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 10px 10px 12px;
+}
+
+.baris-atas-agenda {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.ikon-kategori-agenda {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.jam-agenda {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+.badge-kategori-agenda {
+  margin-left: auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.kategori-kuliah.badge-kategori-agenda     { background: rgba(37,99,235,0.12); color: #2563eb; }
+.kategori-organisasi.badge-kategori-agenda { background: rgba(22,163,74,0.12); color: #16a34a; }
+.kategori-ujian.badge-kategori-agenda      { background: rgba(217,119,6,0.12); color: #d97706; }
+.kategori-pribadi.badge-kategori-agenda    { background: rgba(124,58,237,0.12); color: #7c3aed; }
+.kategori-deadline.badge-kategori-agenda   { background: rgba(225,29,72,0.12); color: #e11d48; }
+
+.judul-agenda-baru {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.keterangan-agenda {
+  font-size: 11px;
+  color: var(--text-soft);
+  margin: 2px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tombol-hapus-agenda {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 18px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  border-radius: 0 14px 14px 0;
+}
+
+.tombol-hapus-agenda:hover {
+  background: rgba(225,29,72,0.08);
+  color: #e11d48;
+}
+
+/* Dark mode adjustments */
+body.mode-gelap .item-agenda-baru {
+  background: rgba(21, 29, 50, 0.6);
+  border-color: rgba(255,255,255,0.06);
+}
+
+body.mode-gelap .grup-agenda-hari-ini {
+  background: rgba(79, 70, 229, 0.08);
+}
+
+body.mode-gelap .badge-jumlah-agenda {
+  background: rgba(79,70,229,0.2);
+}
+
+body.mode-gelap .kategori-kuliah.badge-kategori-agenda     { color: #60a5fa; background: rgba(37,99,235,0.18); }
+body.mode-gelap .kategori-organisasi.badge-kategori-agenda { color: #4ade80; background: rgba(22,163,74,0.18); }
+body.mode-gelap .kategori-ujian.badge-kategori-agenda      { color: #fbbf24; background: rgba(217,119,6,0.18); }
+body.mode-gelap .kategori-pribadi.badge-kategori-agenda    { color: #a78bfa; background: rgba(124,58,237,0.18); }
+body.mode-gelap .kategori-deadline.badge-kategori-agenda   { color: #fb7185; background: rgba(225,29,72,0.18); }
+
+/* ============================================
+   RESPONSIVE MOBILE
+   ============================================ */
+@media (max-width: 768px) {
+  .daftar-agenda-lengkap {
+    max-height: 400px;
+  }
+
+  .grup-titik-jadwal {
+    gap: 2px;
+  }
+
+  .titik-jadwal {
+    width: 5px;
+    height: 5px;
+  }
+
+  .item-agenda-baru {
+    border-radius: 12px;
+  }
+
+  .konten-agenda-baru {
+    padding: 8px 8px 8px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .kepala-agenda-lengkap {
+    padding: 14px 14px 12px;
+  }
+
+  .grup-agenda-tanggal {
+    padding: 12px 12px 10px;
+  }
+
+  .judul-agenda-baru {
+    font-size: 12px;
+  }
+
+  .keterangan-agenda {
+    font-size: 11px;
+  }
+}

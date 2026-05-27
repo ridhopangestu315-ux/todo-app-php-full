@@ -530,12 +530,18 @@ function kalenderUrl($bulan, $kategori) {
                       if ($kode === $today) $classes[] = 'tanggal-hari-ini';
                       if ($date->format('m') !== $bulanAktif->format('m')) $classes[] = 'tanggal-luar-bulan';
                       echo '<button class="kotak-tanggal ' . e(implode(' ', $classes)) . '" type="button" data-tanggal="' . e($kode) . '" data-tanggal-label="' . e(formatTanggalIndo($kode)) . '">';
-                      echo '<span class="kepala-tanggal"><span class="angka-tanggal">' . (int)$date->format('j') . '</span>' . ($items ? '<span class="titik-jadwal"></span>' : '') . '</span>';
+                      // Kumpulkan kategori unik untuk dot indikator
+                      $katsUnik = array_unique(array_column($items, 'kategori'));
+                      $dotsHtml = '';
+                      foreach (array_slice($katsUnik, 0, 4) as $kat) {
+                          $dotsHtml .= '<span class="titik-jadwal titik-' . e($kat) . '"></span>';
+                      }
+                      echo '<span class="kepala-tanggal"><span class="angka-tanggal">' . (int)$date->format('j') . '</span>' . ($items ? '<span class="grup-titik-jadwal">' . $dotsHtml . '</span>' : '') . '</span>';
                       echo '<span class="daftar-jadwal-di-tanggal">';
-                      foreach (array_slice($items, 0, 3) as $item) {
+                      foreach (array_slice($items, 0, 2) as $item) {
                           echo '<span class="label-jadwal kategori-' . e($item['kategori']) . '">' . e($item['jam'] . ' ' . $item['judul']) . '</span>';
                       }
-                      if (count($items) > 3) echo '<span class="jumlah-jadwal-lain">+' . (count($items) - 3) . ' jadwal lain</span>';
+                      if (count($items) > 2) echo '<span class="jumlah-jadwal-lain">+' . (count($items) - 2) . ' lagi</span>';
                       echo '</span></button>';
                   }
                 ?>
@@ -543,8 +549,68 @@ function kalenderUrl($bulan, $kategori) {
             </div>
           </section>
           <aside class="sisi-agenda">
-            <section class="panel"><h3>Agenda Hari Ini</h3><div id="daftarAgendaHariIni" class="daftar-agenda"><?= $agendaHariIni ? implode('', array_map('renderAgendaItem', $agendaHariIni)) : kotakKosong('Tidak ada agenda hari ini.') ?></div></section>
-            <section class="panel"><h3>Reminder Deadline</h3><div id="daftarReminderDeadline" class="daftar-agenda"><?= $reminderDeadline ? implode('', array_map('renderAgendaItem', array_slice($reminderDeadline, 0, 5))) : kotakKosong('Deadline dekat belum ada.') ?></div></section>
+            <section class="panel panel-agenda-lengkap">
+              <div class="kepala-agenda-lengkap">
+                <div>
+                  <p class="teks-kecil">Kalender <?= e(formatBulanIndo($bulanAktif)) ?></p>
+                  <h3>Semua Agenda</h3>
+                </div>
+                <span class="badge-jumlah-agenda"><?= count($itemsKalender) ?> agenda</span>
+              </div>
+              <div class="daftar-agenda-lengkap" id="daftarAgendaHariIni">
+                <?php
+                // Group by tanggal, hanya tampilkan tanggal yang ada agenda
+                $groupByTanggal = [];
+                foreach ($itemsKalender as $item) {
+                    $groupByTanggal[$item['tanggal']][] = $item;
+                }
+                ksort($groupByTanggal);
+
+                if (empty($groupByTanggal)): ?>
+                  <div class="kotak-kosong">Belum ada agenda di bulan ini.<br>Klik tanggal di kalender untuk menambah.</div>
+                <?php else: foreach ($groupByTanggal as $tgl => $agendas):
+                    $isToday = $tgl === $today;
+                    $isPast = $tgl < $today;
+                ?>
+                  <div class="grup-agenda-tanggal <?= $isToday ? 'grup-agenda-hari-ini' : ($isPast ? 'grup-agenda-lampau' : '') ?>">
+                    <div class="label-tanggal-agenda">
+                      <?php if ($isToday): ?>
+                        <span class="badge-hari-ini">Hari Ini</span>
+                      <?php endif; ?>
+                      <span class="teks-tanggal-agenda"><?= e(formatTanggalIndo($tgl)) ?></span>
+                    </div>
+                    <div class="daftar-agenda-per-tanggal">
+                      <?php foreach ($agendas as $item):
+                        $kat = preg_replace('/[^a-z0-9_-]/i', '', $item['kategori']);
+                        $isJadwal = $item['tipe'] === 'jadwal';
+                        $ikonKat = [
+                          'kuliah' => '📚', 'organisasi' => '🤝',
+                          'ujian' => '✏️', 'pribadi' => '⭐', 'deadline' => '🔴'
+                        ][$kat] ?? '📌';
+                      ?>
+                      <article class="item-agenda-baru kategori-<?= e($kat) ?>" data-tanggal="<?= e($tgl) ?>">
+                        <div class="garis-kategori-agenda"></div>
+                        <div class="konten-agenda-baru">
+                          <div class="baris-atas-agenda">
+                            <span class="ikon-kategori-agenda"><?= $ikonKat ?></span>
+                            <span class="jam-agenda"><?= e($item['jam'] === 'DL' ? 'Deadline' : $item['jam']) ?></span>
+                            <span class="badge-kategori-agenda kategori-<?= e($kat) ?>"><?= e(ucfirst($kat)) ?></span>
+                          </div>
+                          <strong class="judul-agenda-baru"><?= e($item['judul']) ?></strong>
+                          <?php if ($item['keterangan']): ?>
+                          <p class="keterangan-agenda"><?= e($item['keterangan']) ?></p>
+                          <?php endif; ?>
+                        </div>
+                        <?php if ($isJadwal): ?>
+                        <button class="tombol-hapus-agenda" type="button" data-hapus-jadwal="<?= (int)$item['id'] ?>" aria-label="Hapus jadwal" title="Hapus">×</button>
+                        <?php endif; ?>
+                      </article>
+                      <?php endforeach; ?>
+                    </div>
+                  </div>
+                <?php endforeach; endif; ?>
+              </div>
+            </section>
           </aside>
         </div>
         <div id="dataAgendaTanggal" hidden><?php foreach ($itemsKalender as $item) echo renderAgendaItem($item); ?></div>
