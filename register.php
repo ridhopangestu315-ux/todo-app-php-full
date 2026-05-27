@@ -1,10 +1,11 @@
 <?php 
+error_reporting(E_ERROR);
+@ini_set('display_errors', '0');
 require 'koneksi.php'; 
 if (isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit;
 }
-
 $error = '';
 $success = false;
 
@@ -14,7 +15,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = trim($_POST['password'] ?? '');
     $password_confirm = trim($_POST['password_confirm'] ?? '');
 
-    // Validasi
     if (!$nama || !$email || !$password) {
         $error = "Semua field wajib diisi!";
     } elseif (strlen($password) < 6) {
@@ -24,31 +24,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Format email tidak valid!";
     } else {
-        $password_hash = password_hash($password, PASSWORD_DEFAULT);
+        // Cek email duplikat terlebih dahulu sebelum INSERT
+        $cek = mysqli_prepare($conn, "SELECT id FROM users WHERE email = ? LIMIT 1");
+        if ($cek) {
+            mysqli_stmt_bind_param($cek, "s", $email);
+            mysqli_stmt_execute($cek);
+            mysqli_stmt_store_result($cek);
+            if (mysqli_stmt_num_rows($cek) > 0) {
+                $error = "Email sudah digunakan. Coba email lain atau login.";
+            }
+            mysqli_stmt_close($cek);
+        }
 
-        $stmt = mysqli_prepare($conn, "INSERT INTO users (nama, email, password) VALUES (?, ?, ?)");
-        if (!$stmt) {
-            $error = "Error: " . mysqli_error($conn);
-        } else {
-            mysqli_stmt_bind_param($stmt, "sss", $nama, $email, $password_hash);
-            
-            if (mysqli_stmt_execute($stmt)) {
-                $user_id = mysqli_insert_id($conn);
-                // Buat settings default
-                $stmt2 = mysqli_prepare($conn, "INSERT INTO settings (user_id, dark_mode, notifikasi) VALUES (?, 0, 1)");
-                mysqli_stmt_bind_param($stmt2, "i", $user_id);
-                mysqli_stmt_execute($stmt2);
-                
-                header("Location: login.php?daftar=berhasil");
-                exit;
+        if (!$error) {
+            $password_hash = password_hash($password, PASSWORD_DEFAULT);
+
+            $stmt = mysqli_prepare($conn, "INSERT INTO users (nama, email, password) VALUES (?, ?, ?)");
+            if (!$stmt) {
+                $error = "Terjadi kesalahan sistem.";
             } else {
-                if (mysqli_errno($conn) == 1062) {
-                    $error = "Email sudah terdaftar!";
+                mysqli_stmt_bind_param($stmt, "sss", $nama, $email, $password_hash);
+                
+                if (mysqli_stmt_execute($stmt)) {
+                    $user_id = mysqli_insert_id($conn);
+                    mysqli_stmt_close($stmt);
+                    // Buat settings default
+                    $stmt2 = mysqli_prepare($conn, "INSERT INTO settings (user_id, dark_mode, notifikasi) VALUES (?, 0, 1)");
+                    if ($stmt2) {
+                        mysqli_stmt_bind_param($stmt2, "i", $user_id);
+                        mysqli_stmt_execute($stmt2);
+                        mysqli_stmt_close($stmt2);
+                    }
+                    
+                    header("Location: login.php?daftar=berhasil");
+                    exit;
                 } else {
-                    $error = "Terjadi kesalahan: " . mysqli_error($conn);
+                    $errno = mysqli_errno($conn);
+                    mysqli_stmt_close($stmt);
+                    if ($errno == 1062) {
+                        $error = "Email sudah digunakan. Coba email lain atau login.";
+                    } else {
+                        $error = "Terjadi kesalahan, silakan coba lagi.";
+                    }
                 }
             }
-            mysqli_stmt_close($stmt);
         }
     }
 }
@@ -75,12 +94,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
     
     <?php if($error): ?>
-      <p style="color:#e11d48;text-align:center;background:#ffe4e6;padding:12px;border-radius:8px;margin-bottom:16px">
+      <p class="notif-auth notif-auth-error" role="alert">
         ✕ <?= htmlspecialchars($error) ?>
       </p>
     <?php endif; ?>
     
-    <form method="POST">
+    <form method="POST" novalidate>
       <div class="grup-form">
         <label>Nama Lengkap</label>
         <input type="text" name="nama" required value="<?= htmlspecialchars($_POST['nama'] ?? '') ?>">

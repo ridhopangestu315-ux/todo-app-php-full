@@ -1,4 +1,6 @@
 <?php 
+error_reporting(E_ERROR);
+@ini_set('display_errors', '0');
 require 'koneksi.php'; 
 if (isset($_SESSION['user_id'])) {
     header("Location: index.php");
@@ -17,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $stmt = mysqli_prepare($conn, "SELECT id, nama, password FROM users WHERE email = ?");
         if (!$stmt) {
-            $error = "Error: " . mysqli_error($conn);
+            $error = "Terjadi kesalahan sistem.";
         } else {
             mysqli_stmt_bind_param($stmt, "s", $email);
             mysqli_stmt_execute($stmt);
@@ -27,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (password_verify($password, $user['password'])) {
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['nama'] = $user['nama'];
+                    $_SESSION['flash_login'] = 'berhasil';
                     header("Location: index.php");
                     exit;
                 } else {
@@ -62,13 +65,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
     
     <?php if($success): ?>
-      <p style="color:#16a34a;text-align:center;background:#dcfce7;padding:12px;border-radius:8px;margin-bottom:16px">
+      <p class="notif-auth notif-auth-sukses">
         ✓ Akun berhasil dibuat! Silakan login.
       </p>
     <?php endif; ?>
     
     <?php if($error): ?>
-      <p style="color:#e11d48;text-align:center;background:#ffe4e6;padding:12px;border-radius:8px;margin-bottom:16px">
+      <p class="notif-auth notif-auth-error">
         ✕ <?= htmlspecialchars($error) ?>
       </p>
     <?php endif; ?>

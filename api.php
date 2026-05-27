@@ -1,4 +1,8 @@
 <?php
+// Suppress PHP errors/warnings from leaking into JSON output
+error_reporting(0);
+@ini_set('display_errors', '0');
+
 /**
  * ============================================
  * API - STUDYFLOW
@@ -93,6 +97,21 @@ function pastikanTabelCourses($conn) {
 }
 
 pastikanTabelCourses($conn);
+
+// Auto-create schedules table jika belum ada
+mysqli_query($conn, "
+    CREATE TABLE IF NOT EXISTS schedules (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        user_id INT NOT NULL,
+        nama_jadwal VARCHAR(255) NOT NULL,
+        tanggal DATE,
+        jam TIME,
+        kategori VARCHAR(50) DEFAULT 'pribadi',
+        dibuat_pada TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_user_id (user_id),
+        INDEX idx_tanggal (tanggal)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+");
 
 // ============================================
 // GET REQUEST HANDLER

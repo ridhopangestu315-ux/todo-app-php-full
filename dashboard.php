@@ -1,4 +1,8 @@
 <?php
+// Suppress PHP warnings/notices dari tampilan
+error_reporting(E_ERROR);
+@ini_set('display_errors', '0');
+
 date_default_timezone_set('Asia/Jakarta');
 require 'koneksi.php';
 
@@ -8,6 +12,13 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = (int)$_SESSION['user_id'];
+
+// Flash message: login berhasil
+$flash_login = '';
+if (isset($_SESSION['flash_login']) && $_SESSION['flash_login'] === 'berhasil') {
+    $flash_login = 'berhasil';
+    unset($_SESSION['flash_login']);
+}
 
 function e($value) {
     return htmlspecialchars((string)($value ?? ''), ENT_QUOTES, 'UTF-8');
@@ -197,6 +208,21 @@ function renderAgendaItem($item) {
 }
 
 pastikanTabelCourses($conn);
+
+// Auto-create schedules table jika belum ada
+mysqli_query($conn, "
+    CREATE TABLE IF NOT EXISTS schedules (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        user_id INT NOT NULL,
+        nama_jadwal VARCHAR(255) NOT NULL,
+        tanggal DATE,
+        jam TIME,
+        kategori VARCHAR(50) DEFAULT 'pribadi',
+        dibuat_pada TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_user_id (user_id),
+        INDEX idx_tanggal (tanggal)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+");
 
 $user_data = ambilSatu($conn, "SELECT nama, email, foto_profil FROM users WHERE id = ?", 'i', [$user_id]) ?: [];
 $settings = ambilSatu($conn, "SELECT dark_mode, notifikasi FROM settings WHERE user_id = ?", 'i', [$user_id]);
@@ -567,7 +593,8 @@ function kalenderUrl($bulan, $kategori) {
       fotoProfil: <?= json_encode($foto_profil, JSON_UNESCAPED_UNICODE) ?>,
       inisial: <?= json_encode($inisial_user, JSON_UNESCAPED_UNICODE) ?>,
       modeGelap: <?= (int)$settings['dark_mode'] ?>,
-      notifikasi: <?= (int)$settings['notifikasi'] ?>
+      notifikasi: <?= (int)$settings['notifikasi'] ?>,
+      flashLogin: <?= json_encode($flash_login) ?>
     };
   </script>
   <script src="script.js?v=20260526-ssr-mobile"></script>

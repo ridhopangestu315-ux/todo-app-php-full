@@ -101,16 +101,20 @@
     if (!els.toastRoot) return;
 
     const toast = document.createElement("div");
-    toast.className = "toast" + (type === "error" ? " toast-error" : "");
+    var cls = "toast";
+    if (type === "error") cls += " toast-error";
+    if (type === "success") cls += " toast-success";
+    toast.className = cls;
     toast.textContent = message;
     els.toastRoot.appendChild(toast);
 
+    var duration = type === "success" ? 3200 : 2600;
     window.setTimeout(function () {
       toast.classList.add("toast-keluar");
       window.setTimeout(function () {
         toast.remove();
-      }, 180);
-    }, 2600);
+      }, 200);
+    }, duration);
   }
 
   function setActivePage(pageName, updateUrl) {
@@ -182,24 +186,34 @@
 
   function openScheduleModal(dateValue) {
     if (!els.scheduleModal) return;
-    const date = dateValue || new Date().toISOString().slice(0, 10);
+    var today = new Date();
+    var todayStr = today.getFullYear() + "-" +
+      String(today.getMonth() + 1).padStart(2, "0") + "-" +
+      String(today.getDate()).padStart(2, "0");
+    var date = dateValue || todayStr;
     state.selectedScheduleDate = date;
 
     if (els.scheduleDateInput) els.scheduleDateInput.value = date;
     if (els.scheduleDateText) {
-      els.scheduleDateText.textContent = new Intl.DateTimeFormat("id-ID", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric"
-      }).format(new Date(date + "T00:00:00"));
+      try {
+        var parts = date.split("-");
+        var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        els.scheduleDateText.textContent = new Intl.DateTimeFormat("id-ID", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric"
+        }).format(d);
+      } catch (e) {
+        els.scheduleDateText.textContent = date;
+      }
     }
 
     els.scheduleModal.classList.add("tampil");
     els.scheduleModal.setAttribute("aria-hidden", "false");
     window.setTimeout(function () {
-      els.scheduleNameInput?.focus();
-    }, 60);
+      if (els.scheduleNameInput) els.scheduleNameInput.focus();
+    }, 80);
   }
 
   function closeScheduleModal() {
@@ -353,9 +367,12 @@
 
     els.taskForm?.addEventListener("submit", async function (event) {
       event.preventDefault();
-      const nama = $("#inputNamaTugas")?.value.trim() || "";
-      const mataKuliah = $("#pilihanMataKuliah")?.value.trim() || "";
-      const deadline = $("#inputDeadlineTugas")?.value || "";
+      var namaTugasEl = $("#inputNamaTugas");
+      var mataKuliahEl = $("#pilihanMataKuliah");
+      var deadlineEl = $("#inputDeadlineTugas");
+      var nama = namaTugasEl ? namaTugasEl.value.trim() : "";
+      var mataKuliah = mataKuliahEl ? mataKuliahEl.value.trim() : "";
+      var deadline = deadlineEl ? deadlineEl.value : "";
       if (!nama || !deadline) {
         showToast("Nama tugas dan deadline wajib diisi.", "error");
         return;
@@ -416,12 +433,19 @@
 
     els.scheduleForm?.addEventListener("submit", async function (event) {
       event.preventDefault();
-      const nama = els.scheduleNameInput?.value.trim() || "";
-      const tanggal = els.scheduleDateInput?.value || "";
-      const jam = els.scheduleTimeInput?.value || "";
-      const kategori = els.scheduleCategoryInput?.value || "pribadi";
+      var nama = (els.scheduleNameInput ? els.scheduleNameInput.value : "").trim();
+      var tanggal = els.scheduleDateInput ? els.scheduleDateInput.value : "";
+      var jam = els.scheduleTimeInput ? els.scheduleTimeInput.value : "";
+      var kategori = els.scheduleCategoryInput ? els.scheduleCategoryInput.value : "pribadi";
+
       if (!nama || !tanggal || !jam) {
         showToast("Nama, tanggal, dan jam jadwal wajib diisi.", "error");
+        return;
+      }
+
+      // Validasi format jam HH:MM
+      if (!/^\d{2}:\d{2}$/.test(jam)) {
+        showToast("Format jam tidak valid. Gunakan format HH:MM.", "error");
         return;
       }
 
@@ -432,7 +456,10 @@
           jam: jam,
           kategori: kategori
         });
-        reloadWithPage("kalender");
+        showToast("Jadwal berhasil ditambahkan!", "success");
+        window.setTimeout(function () {
+          reloadWithPage("kalender");
+        }, 600);
       } catch (error) {
         showToast(error.message, "error");
       }
@@ -593,6 +620,13 @@
     window.setInterval(updateClock, 60000);
     setActivePage(state.activePage, false);
     wireEvents();
+
+    // Toast login berhasil
+    if (profile.flashLogin === 'berhasil') {
+      window.setTimeout(function () {
+        showToast("Login berhasil 👋 Selamat datang, " + (profile.nama || "kamu") + "!", "success");
+      }, 400);
+    }
   }
 
   if (document.readyState === "loading") {
