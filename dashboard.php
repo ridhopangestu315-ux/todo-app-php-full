@@ -490,7 +490,7 @@ function kalenderUrl($bulan, $kategori) {
         <div class="judul-bagian"><div><p class="teks-kecil">Kelola</p><h2>Daftar Tugas</h2></div></div>
         <form id="formTambahTugas" class="form-tugas" novalidate>
           <div class="grup-form"><label for="inputNamaTugas">Nama tugas</label><input type="text" id="inputNamaTugas" placeholder="Contoh: Laporan praktikum" autocomplete="off"><small id="pesanErrorNamaTugas" class="pesan-error"></small></div>
-          <div class="grup-form"><label for="pilihanMataKuliah">Mata kuliah</label><select id="pilihanMataKuliah"><option value=""><?= $courses ? 'Pilih mata kuliah' : 'Tambahkan mata kuliah terlebih dahulu' ?></option><?php foreach ($courses as $course): ?><option value="<?= e($course['nama_mata_kuliah']) ?>"><?= e($course['nama_mata_kuliah']) ?></option><?php endforeach; ?></select><small id="pesanErrorMataKuliah" class="pesan-error"></small></div>
+          <div class="grup-form"><label for="pilihanMataKuliah">Mata kuliah</label><select id="pilihanMataKuliah"><option value=""><?= $courses ? 'Pilih mata kuliah' : 'Tambahkan mata kuliah terlebih dahulu di pengaturan' ?></option><?php foreach ($courses as $course): ?><option value="<?= e($course['nama_mata_kuliah']) ?>"><?= e($course['nama_mata_kuliah']) ?></option><?php endforeach; ?></select><small id="pesanErrorMataKuliah" class="pesan-error"></small></div>
           <div class="grup-form"><label for="inputDeadlineTugas">Deadline</label><input type="date" id="inputDeadlineTugas" min="<?= e($today) ?>"><small id="pesanErrorDeadlineTugas" class="pesan-error"></small></div>
           <button class="tombol-utama" type="submit">Tambah Tugas</button>
         </form>

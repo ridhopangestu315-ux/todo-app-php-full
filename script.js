@@ -832,12 +832,7 @@
 
       kirimJSON('hapus_akun', { password_konfirmasi: password }, function (res) {
         if (res.status === 'success') {
-          // Tutup modal, tampilkan notif sebentar lalu redirect
-          tutupModalHapus();
-          showToast('Akun berhasil dihapus. Sampai jumpa! 👋', 'success');
-          window.setTimeout(function () {
-            window.location.href = 'login.php';
-          }, 1800);
+          window.location.href = 'login.php';
         } else {
           tombolKonfirmasi.disabled = false;
           tombolKonfirmasi.textContent = 'Hapus Akun Saya';

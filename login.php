@@ -33,10 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     header("Location: index.php");
                     exit;
                 } else {
-                    $error = "Email atau password salah!";
+                    $error = "Password salah!";
                 }
             } else {
-                $error = "Email atau password salah!";
+                $error = "Email tidak terdaftar. Silakan daftar terlebih dahulu.";
             }
             mysqli_stmt_close($stmt);
         }
