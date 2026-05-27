@@ -633,8 +633,63 @@ function kalenderUrl($bulan, $kategori) {
           <section class="panel"><h3>Tampilan</h3><p class="teks-kecil-panel">Mode tampilan mengikuti tombol di header dan tersimpan otomatis.</p><button id="tombolModeGelapPengaturan" class="tombol-mode-pengaturan" type="button" data-toggle-mode-gelap aria-pressed="<?= (int)$settings['dark_mode'] ? 'true' : 'false' ?>"><span class="ikon-mode-gelap" aria-hidden="true"><?= (int)$settings['dark_mode'] ? '☀' : '🌙' ?></span><span class="label-mode-gelap"><?= (int)$settings['dark_mode'] ? 'Gunakan light mode' : 'Gunakan dark mode' ?></span></button></section>
           <section class="panel"><h3>Notifikasi</h3><label class="baris-switch" for="toggleNotifikasiDeadline"><span>Peringatan deadline dekat</span><input type="checkbox" id="toggleNotifikasiDeadline" <?= (int)$settings['notifikasi'] ? 'checked' : '' ?>></label></section>
           <section class="panel panel-mata-kuliah" id="panelMataKuliah"><h3>Mata Kuliah</h3><p class="teks-kecil-panel">Tambahkan mata kuliah kamu. Daftar ini otomatis muncul di form tambah tugas.</p><div class="form-tambah-mata-kuliah"><div class="grup-form"><label for="inputNamaMataKuliah">Nama mata kuliah</label><input type="text" id="inputNamaMataKuliah" placeholder="Contoh: Pemrograman Mobile" autocomplete="off" maxlength="80"><small id="pesanErrorMataKuliahBaru" class="pesan-error"></small></div><button id="tombolTambahMataKuliah" class="tombol-utama" type="button">Tambah</button></div><div id="daftarMataKuliahPengaturan" class="daftar-mata-kuliah-pengaturan"><?php if ($courses): foreach ($courses as $course): ?><div class="item-mata-kuliah" data-course-id="<?= (int)$course['id'] ?>"><span class="nama-mata-kuliah-item"><?= e($course['nama_mata_kuliah']) ?></span><button class="tombol-hapus-mata-kuliah" type="button" data-course-remove="<?= (int)$course['id'] ?>">Hapus</button></div><?php endforeach; else: ?><div class="kotak-kosong-mata-kuliah"><span class="ikon-kosong-mata-kuliah">+</span>Belum ada mata kuliah. Tambahkan mata kuliah terlebih dahulu.</div><?php endif; ?></div></section>
-          <section class="panel panel-bahaya"><h3>Data</h3><p>Hapus semua tugas dan jadwal dari akun ini.</p><button id="tombolResetData" class="tombol-bahaya" type="button">Hapus Semua Data</button></section>
-          <section class="panel panel-akun"><h3>Akun</h3><p>Keluar dari sesi StudyFlow di perangkat ini.</p><a class="tombol-logout" href="logout.php" aria-label="Logout dari StudyFlow"><span class="ikon-logout" aria-hidden="true">&#x21AA;</span><span>Logout</span></a></section>
+          <section class="panel panel-keamanan">
+            <h3>Ganti Password</h3>
+            <p class="teks-kecil-panel">Gunakan password yang kuat dan belum pernah dipakai di tempat lain.</p>
+            <div class="grup-form">
+              <label for="inputPasswordLama">Password lama</label>
+              <input type="password" id="inputPasswordLama" placeholder="Password saat ini" autocomplete="current-password">
+            </div>
+            <div class="grup-form">
+              <label for="inputPasswordBaru">Password baru</label>
+              <input type="password" id="inputPasswordBaru" placeholder="Minimal 6 karakter" autocomplete="new-password">
+            </div>
+            <div class="grup-form">
+              <label for="inputKonfirmasiPassword">Konfirmasi password baru</label>
+              <input type="password" id="inputKonfirmasiPassword" placeholder="Ulangi password baru" autocomplete="new-password">
+            </div>
+            <small id="pesanGantiPassword" class="pesan-error"></small>
+            <button id="tombolGantiPassword" class="tombol-utama" type="button">Simpan Password</button>
+          </section>
+
+          <section class="panel panel-keamanan">
+            <h3>Ganti Email</h3>
+            <p class="teks-kecil-panel">Email kamu saat ini: <strong id="emailSaatIni"><?= e($user_data['email'] ?? '') ?></strong></p>
+            <div class="grup-form">
+              <label for="inputEmailBaru">Email baru</label>
+              <input type="email" id="inputEmailBaru" placeholder="email@baru.com" autocomplete="email">
+            </div>
+            <div class="grup-form">
+              <label for="inputPasswordKonfirmasiEmail">Konfirmasi dengan password</label>
+              <input type="password" id="inputPasswordKonfirmasiEmail" placeholder="Password kamu" autocomplete="current-password">
+            </div>
+            <small id="pesanGantiEmail" class="pesan-error"></small>
+            <button id="tombolGantiEmail" class="tombol-utama" type="button">Simpan Email</button>
+          </section>
+
+          <section class="panel panel-bahaya">
+            <h3>Data</h3>
+            <p>Hapus semua tugas dan jadwal dari akun ini.</p>
+            <button id="tombolResetData" class="tombol-bahaya" type="button">Hapus Semua Data</button>
+            <hr style="margin:1rem 0;border-color:var(--warna-border)">
+            <h3>Hapus Akun</h3>
+            <p>Akun, semua tugas, jadwal, dan data akan dihapus permanen dan <strong>tidak bisa dipulihkan</strong>.</p>
+            <div class="grup-form" id="grupHapusAkun" style="display:none">
+              <label for="inputPasswordHapusAkun">Konfirmasi password</label>
+              <input type="password" id="inputPasswordHapusAkun" placeholder="Masukkan password kamu">
+              <small id="pesanHapusAkun" class="pesan-error"></small>
+            </div>
+            <button id="tombolHapusAkun" class="tombol-bahaya" type="button">Hapus Akun Permanen</button>
+          </section>
+
+          <section class="panel panel-akun">
+            <h3>Akun</h3>
+            <p>Export semua tugas dan jadwal ke file CSV.</p>
+            <a id="tombolExportCSV" class="tombol-kedua" href="api.php?aksi=export_csv" style="display:inline-flex;align-items:center;gap:.4rem;text-decoration:none">⬇ Export Data CSV</a>
+            <hr style="margin:1rem 0;border-color:var(--warna-border)">
+            <p>Keluar dari sesi StudyFlow di perangkat ini.</p>
+            <a class="tombol-logout" href="logout.php" aria-label="Logout dari StudyFlow"><span class="ikon-logout" aria-hidden="true">&#x21AA;</span><span>Logout</span></a>
+          </section>
         </div>
       </section>
     </main>

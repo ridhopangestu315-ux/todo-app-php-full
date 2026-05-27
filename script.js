@@ -635,3 +635,144 @@
     init();
   }
 })();
+
+// ============================================
+// FITUR PENGATURAN TAMBAHAN
+// Ganti Password | Ganti Email | Hapus Akun
+// ============================================
+(function () {
+  function pesan(elId, teks, isError) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    el.textContent = teks;
+    el.style.color = isError ? 'var(--warna-bahaya, #e74c3c)' : 'var(--warna-sukses, #27ae60)';
+  }
+
+  function kirimJSON(aksi, data, cb) {
+    fetch('api.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ aksi: aksi }, data))
+    })
+      .then(function (r) { return r.json(); })
+      .then(cb)
+      .catch(function () { cb({ status: 'error', message: 'Koneksi gagal' }); });
+  }
+
+  // --- GANTI PASSWORD ---
+  var tombolGantiPassword = document.getElementById('tombolGantiPassword');
+  if (tombolGantiPassword) {
+    tombolGantiPassword.addEventListener('click', function () {
+      var lama   = (document.getElementById('inputPasswordLama') || {}).value || '';
+      var baru   = (document.getElementById('inputPasswordBaru') || {}).value || '';
+      var konfirm = (document.getElementById('inputKonfirmasiPassword') || {}).value || '';
+
+      pesan('pesanGantiPassword', '', true);
+
+      if (!lama || !baru || !konfirm) {
+        return pesan('pesanGantiPassword', 'Semua kolom wajib diisi.', true);
+      }
+      if (baru.length < 6) {
+        return pesan('pesanGantiPassword', 'Password baru minimal 6 karakter.', true);
+      }
+      if (baru !== konfirm) {
+        return pesan('pesanGantiPassword', 'Konfirmasi password tidak cocok.', true);
+      }
+
+      tombolGantiPassword.disabled = true;
+      tombolGantiPassword.textContent = 'Menyimpan...';
+
+      kirimJSON('ganti_password', {
+        password_lama: lama,
+        password_baru: baru,
+        konfirmasi_password: konfirm
+      }, function (res) {
+        tombolGantiPassword.disabled = false;
+        tombolGantiPassword.textContent = 'Simpan Password';
+        if (res.status === 'success') {
+          pesan('pesanGantiPassword', '✓ ' + res.message, false);
+          document.getElementById('inputPasswordLama').value = '';
+          document.getElementById('inputPasswordBaru').value = '';
+          document.getElementById('inputKonfirmasiPassword').value = '';
+        } else {
+          pesan('pesanGantiPassword', res.message, true);
+        }
+      });
+    });
+  }
+
+  // --- GANTI EMAIL ---
+  var tombolGantiEmail = document.getElementById('tombolGantiEmail');
+  if (tombolGantiEmail) {
+    tombolGantiEmail.addEventListener('click', function () {
+      var emailBaru = (document.getElementById('inputEmailBaru') || {}).value || '';
+      var password  = (document.getElementById('inputPasswordKonfirmasiEmail') || {}).value || '';
+
+      pesan('pesanGantiEmail', '', true);
+
+      if (!emailBaru || !password) {
+        return pesan('pesanGantiEmail', 'Email baru dan password wajib diisi.', true);
+      }
+
+      tombolGantiEmail.disabled = true;
+      tombolGantiEmail.textContent = 'Menyimpan...';
+
+      kirimJSON('ganti_email', {
+        email_baru: emailBaru,
+        password_konfirmasi: password
+      }, function (res) {
+        tombolGantiEmail.disabled = false;
+        tombolGantiEmail.textContent = 'Simpan Email';
+        if (res.status === 'success') {
+          pesan('pesanGantiEmail', '✓ ' + res.message, false);
+          var el = document.getElementById('emailSaatIni');
+          if (el) el.textContent = emailBaru;
+          document.getElementById('inputEmailBaru').value = '';
+          document.getElementById('inputPasswordKonfirmasiEmail').value = '';
+        } else {
+          pesan('pesanGantiEmail', res.message, true);
+        }
+      });
+    });
+  }
+
+  // --- HAPUS AKUN PERMANEN ---
+  var tombolHapusAkun = document.getElementById('tombolHapusAkun');
+  var grupHapusAkun   = document.getElementById('grupHapusAkun');
+  var tahapKonfirmasi = false;
+
+  if (tombolHapusAkun) {
+    tombolHapusAkun.addEventListener('click', function () {
+      if (!tahapKonfirmasi) {
+        // Tahap 1: tampilkan input password
+        tahapKonfirmasi = true;
+        if (grupHapusAkun) grupHapusAkun.style.display = '';
+        tombolHapusAkun.textContent = 'Ya, Hapus Akun Saya';
+        tombolHapusAkun.style.opacity = '1';
+        return;
+      }
+
+      // Tahap 2: kirim
+      var password = (document.getElementById('inputPasswordHapusAkun') || {}).value || '';
+      pesan('pesanHapusAkun', '', true);
+
+      if (!password) {
+        return pesan('pesanHapusAkun', 'Masukkan password untuk konfirmasi.', true);
+      }
+
+      tombolHapusAkun.disabled = true;
+      tombolHapusAkun.textContent = 'Menghapus...';
+
+      kirimJSON('hapus_akun', { password_konfirmasi: password }, function (res) {
+        if (res.status === 'success') {
+          // Redirect ke login setelah akun dihapus
+          window.location.href = 'login.php?hapus=sukses';
+        } else {
+          tombolHapusAkun.disabled = false;
+          tombolHapusAkun.textContent = 'Ya, Hapus Akun Saya';
+          pesan('pesanHapusAkun', res.message, true);
+        }
+      });
+    });
+  }
+})();

@@ -215,6 +215,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         respons('success', 'Mata kuliah berhasil diambil', $courses);
     }
 
+
+    // EXPORT DATA CSV
+    elseif ($aksi === 'export_csv') {
+        $kolom_waktu_t = punyaKolom($conn, 'tasks', 'dibuat_pada') ? 'dibuat_pada' : 'created_at';
+        $kolom_waktu_s = punyaKolom($conn, 'schedules', 'dibuat_pada') ? 'dibuat_pada' : 'created_at';
+
+        $stmt = mysqli_prepare($conn, "SELECT nama_tugas, mata_kuliah, deadline, IF(sudah_selesai=1,'Selesai','Belum selesai') AS status, `$kolom_waktu_t` AS dibuat_pada FROM tasks WHERE user_id = ? ORDER BY deadline ASC");
+        mysqli_stmt_bind_param($stmt, "i", $user_id);
+        mysqli_stmt_execute($stmt);
+        $tasks = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+
+        $stmt2 = mysqli_prepare($conn, "SELECT nama_jadwal, tanggal, jam, kategori, `$kolom_waktu_s` AS dibuat_pada FROM schedules WHERE user_id = ? ORDER BY tanggal ASC, jam ASC");
+        mysqli_stmt_bind_param($stmt2, "i", $user_id);
+        mysqli_stmt_execute($stmt2);
+        $schedules = mysqli_fetch_all(mysqli_stmt_get_result($stmt2), MYSQLI_ASSOC);
+
+        $csv = "\xEF\xBB\xBF";
+        $csv .= "=== DATA TUGAS ===\r\n";
+        $csv .= "Nama Tugas,Mata Kuliah,Deadline,Status,Dibuat Pada\r\n";
+        foreach ($tasks as $t) {
+            $baris  = '"' . str_replace('"', '""', $t['nama_tugas'])   . '",';
+            $baris .= '"' . str_replace('"', '""', $t['mata_kuliah'])  . '",';
+            $baris .= '"' . $t['deadline']   . '",';
+            $baris .= '"' . $t['status']     . '",';
+            $baris .= '"' . $t['dibuat_pada'] . '"';
+            $csv .= $baris . "\r\n";
+        }
+        $csv .= "\r\n=== DATA JADWAL ===\r\n";
+        $csv .= "Nama Jadwal,Tanggal,Jam,Kategori,Dibuat Pada\r\n";
+        foreach ($schedules as $s) {
+            $baris  = '"' . str_replace('"', '""', $s['nama_jadwal']) . '",';
+            $baris .= '"' . $s['tanggal']    . '",';
+            $baris .= '"' . $s['jam']        . '",';
+            $baris .= '"' . $s['kategori']   . '",';
+            $baris .= '"' . $s['dibuat_pada'] . '"';
+            $csv .= $baris . "\r\n";
+        }
+
+        header("Content-Type: text/csv; charset=utf-8");
+        header("Content-Disposition: attachment; filename=studyflow_export_" . date("Ymd") . ".csv");
+        echo $csv;
+        exit;
+    }
+
     // GET TASK BY ID
     elseif ($aksi === 'ambil_tugas_by_id') {
         $id = (int)($_GET['id'] ?? 0);
@@ -626,6 +670,118 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         mysqli_stmt_execute($stmt);
 
         respons('success', 'Semua data akun berhasil direset');
+    }
+
+    // GANTI PASSWORD
+    elseif ($aksi === 'ganti_password') {
+        $password_lama = $input['password_lama'] ?? '';
+        $password_baru = $input['password_baru'] ?? '';
+        $konfirmasi    = $input['konfirmasi_password'] ?? '';
+
+        if (!$password_lama || !$password_baru || !$konfirmasi) {
+            respons('error', 'Semua kolom password wajib diisi');
+        }
+        if (strlen($password_baru) < 6) {
+            respons('error', 'Password baru minimal 6 karakter');
+        }
+        if ($password_baru !== $konfirmasi) {
+            respons('error', 'Konfirmasi password tidak cocok');
+        }
+
+        $stmt = mysqli_prepare($conn, "SELECT password FROM users WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $user_id);
+        mysqli_stmt_execute($stmt);
+        $row = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+
+        if (!$row || !password_verify($password_lama, $row['password'])) {
+            respons('error', 'Password lama salah');
+        }
+
+        $hash_baru = password_hash($password_baru, PASSWORD_DEFAULT);
+        $stmt = mysqli_prepare($conn, "UPDATE users SET password = ? WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, "si", $hash_baru, $user_id);
+
+        if (mysqli_stmt_execute($stmt)) {
+            respons('success', 'Password berhasil diubah');
+        } else {
+            respons('error', 'Gagal mengubah password');
+        }
+    }
+
+    // GANTI EMAIL
+    elseif ($aksi === 'ganti_email') {
+        $email_baru  = inputTeks($input['email_baru'] ?? '', 100);
+        $password_konfirmasi = $input['password_konfirmasi'] ?? '';
+
+        if (!$email_baru || !$password_konfirmasi) {
+            respons('error', 'Email baru dan password wajib diisi');
+        }
+        if (!filter_var($email_baru, FILTER_VALIDATE_EMAIL)) {
+            respons('error', 'Format email tidak valid');
+        }
+
+        // Cek email sudah dipakai akun lain
+        $stmt = mysqli_prepare($conn, "SELECT id FROM users WHERE email = ? AND id != ?");
+        mysqli_stmt_bind_param($stmt, "si", $email_baru, $user_id);
+        mysqli_stmt_execute($stmt);
+        if (mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))) {
+            respons('error', 'Email sudah digunakan akun lain');
+        }
+
+        // Verifikasi password
+        $stmt = mysqli_prepare($conn, "SELECT password FROM users WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $user_id);
+        mysqli_stmt_execute($stmt);
+        $row = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+
+        if (!$row || !password_verify($password_konfirmasi, $row['password'])) {
+            respons('error', 'Password salah, perubahan email dibatalkan');
+        }
+
+        $stmt = mysqli_prepare($conn, "UPDATE users SET email = ? WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, "si", $email_baru, $user_id);
+
+        if (mysqli_stmt_execute($stmt)) {
+            $_SESSION['email'] = $email_baru;
+            respons('success', 'Email berhasil diubah', ['email' => $email_baru]);
+        } else {
+            respons('error', 'Gagal mengubah email');
+        }
+    }
+
+    // HAPUS AKUN PERMANEN
+    elseif ($aksi === 'hapus_akun') {
+        $password_konfirmasi = $input['password_konfirmasi'] ?? '';
+
+        if (!$password_konfirmasi) {
+            respons('error', 'Masukkan password untuk konfirmasi');
+        }
+
+        $stmt = mysqli_prepare($conn, "SELECT password, foto_profil FROM users WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $user_id);
+        mysqli_stmt_execute($stmt);
+        $row = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+
+        if (!$row || !password_verify($password_konfirmasi, $row['password'])) {
+            respons('error', 'Password salah, akun tidak dihapus');
+        }
+
+        // Hapus foto profil dari disk jika ada
+        $foto = $row['foto_profil'] ?? '';
+        if ($foto && strpos($foto, 'uploads/') === 0 && is_file($foto)) {
+            unlink($foto);
+        }
+
+        // Hapus user (CASCADE akan hapus tasks, schedules, settings, courses)
+        $stmt = mysqli_prepare($conn, "DELETE FROM users WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $user_id);
+
+        if (mysqli_stmt_execute($stmt)) {
+            session_destroy();
+            respons('success', 'Akun berhasil dihapus permanen');
+        } else {
+            respons('error', 'Gagal menghapus akun');
+        }
     }
 
     else {

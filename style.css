@@ -4694,3 +4694,80 @@ body.mode-gelap .kategori-deadline.badge-kategori-agenda   { color: #fb7185; bac
     font-size: 11px;
   }
 }
+
+/* ============================================
+   PANEL KEAMANAN (Ganti Password & Email)
+   ============================================ */
+.panel-keamanan {
+  border-color: rgba(79, 70, 229, 0.18);
+}
+
+.panel-keamanan h3 {
+  margin-bottom: 6px;
+}
+
+.panel-keamanan .teks-kecil-panel {
+  margin-top: 4px;
+  margin-bottom: 18px;
+}
+
+.panel-keamanan .grup-form {
+  margin-bottom: 12px;
+}
+
+.panel-keamanan .tombol-utama {
+  margin-top: 6px;
+  width: 100%;
+}
+
+.panel-keamanan .pesan-error {
+  display: block;
+  margin-top: -6px;
+  margin-bottom: 4px;
+}
+
+/* Hapus Akun — grup input muncul saat konfirmasi */
+#grupHapusAkun {
+  margin-top: 14px;
+  margin-bottom: 4px;
+}
+
+#grupHapusAkun input {
+  border-color: rgba(225, 29, 72, 0.32);
+}
+
+#grupHapusAkun input:focus {
+  border-color: var(--red, #e11d48);
+  box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.12);
+}
+
+/* Tombol Export CSV — ikuti gaya tombol-kedua tapi full width */
+#tombolExportCSV {
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+/* Divider di dalam panel */
+.panel-bahaya hr,
+.panel-akun hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 18px 0;
+}
+
+.panel-bahaya h3 + p {
+  margin: 6px 0 0;
+}
+
+.panel-bahaya h3:not(:first-child) {
+  margin-top: 4px;
+}
+
+body.mode-gelap .panel-keamanan {
+  border-color: rgba(99, 102, 241, 0.22);
+}
+
+body.mode-gelap #grupHapusAkun input {
+  border-color: rgba(251, 113, 133, 0.3);
+}
