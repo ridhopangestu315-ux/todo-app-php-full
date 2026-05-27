@@ -216,48 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 
 
-    // EXPORT DATA CSV
-    elseif ($aksi === 'export_csv') {
-        $kolom_waktu_t = punyaKolom($conn, 'tasks', 'dibuat_pada') ? 'dibuat_pada' : 'created_at';
-        $kolom_waktu_s = punyaKolom($conn, 'schedules', 'dibuat_pada') ? 'dibuat_pada' : 'created_at';
-
-        $stmt = mysqli_prepare($conn, "SELECT nama_tugas, mata_kuliah, deadline, IF(sudah_selesai=1,'Selesai','Belum selesai') AS status, `$kolom_waktu_t` AS dibuat_pada FROM tasks WHERE user_id = ? ORDER BY deadline ASC");
-        mysqli_stmt_bind_param($stmt, "i", $user_id);
-        mysqli_stmt_execute($stmt);
-        $tasks = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
-
-        $stmt2 = mysqli_prepare($conn, "SELECT nama_jadwal, tanggal, jam, kategori, `$kolom_waktu_s` AS dibuat_pada FROM schedules WHERE user_id = ? ORDER BY tanggal ASC, jam ASC");
-        mysqli_stmt_bind_param($stmt2, "i", $user_id);
-        mysqli_stmt_execute($stmt2);
-        $schedules = mysqli_fetch_all(mysqli_stmt_get_result($stmt2), MYSQLI_ASSOC);
-
-        $csv = "\xEF\xBB\xBF";
-        $csv .= "=== DATA TUGAS ===\r\n";
-        $csv .= "Nama Tugas,Mata Kuliah,Deadline,Status,Dibuat Pada\r\n";
-        foreach ($tasks as $t) {
-            $baris  = '"' . str_replace('"', '""', $t['nama_tugas'])   . '",';
-            $baris .= '"' . str_replace('"', '""', $t['mata_kuliah'])  . '",';
-            $baris .= '"' . $t['deadline']   . '",';
-            $baris .= '"' . $t['status']     . '",';
-            $baris .= '"' . $t['dibuat_pada'] . '"';
-            $csv .= $baris . "\r\n";
-        }
-        $csv .= "\r\n=== DATA JADWAL ===\r\n";
-        $csv .= "Nama Jadwal,Tanggal,Jam,Kategori,Dibuat Pada\r\n";
-        foreach ($schedules as $s) {
-            $baris  = '"' . str_replace('"', '""', $s['nama_jadwal']) . '",';
-            $baris .= '"' . $s['tanggal']    . '",';
-            $baris .= '"' . $s['jam']        . '",';
-            $baris .= '"' . $s['kategori']   . '",';
-            $baris .= '"' . $s['dibuat_pada'] . '"';
-            $csv .= $baris . "\r\n";
-        }
-
-        header("Content-Type: text/csv; charset=utf-8");
-        header("Content-Disposition: attachment; filename=studyflow_export_" . date("Ymd") . ".csv");
-        echo $csv;
-        exit;
-    }
+    // Export PDF ditangani oleh export_pdf.php (bukan via API)
 
     // GET TASK BY ID
     elseif ($aksi === 'ambil_tugas_by_id') {

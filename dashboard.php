@@ -679,8 +679,8 @@ function kalenderUrl($bulan, $kategori) {
 
           <section class="panel panel-akun">
             <h3>Akun</h3>
-            <p>Export semua tugas dan jadwal ke file CSV.</p>
-            <a id="tombolExportCSV" class="tombol-kedua" href="api.php?aksi=export_csv" style="display:inline-flex;align-items:center;gap:.4rem;text-decoration:none">⬇ Export Data CSV</a>
+            <p>Export semua tugas dan jadwal ke file PDF yang rapi dan siap cetak.</p>
+            <a id="tombolExportPDF" class="tombol-kedua" href="export_pdf.php" target="_blank" style="display:inline-flex;align-items:center;gap:.4rem;text-decoration:none">🖨 Export Data PDF</a>
             <hr style="margin:1rem 0;border-color:var(--warna-border)">
             <p>Keluar dari sesi StudyFlow di perangkat ini.</p>
             <a class="tombol-logout" href="logout.php" aria-label="Logout dari StudyFlow"><span class="ikon-logout" aria-hidden="true">&#x21AA;</span><span>Logout</span></a>
