@@ -20,6 +20,7 @@
     desktopNav: $$(".tombol-menu"),
     mobileNav: $$(".tombol-nav-mobile"),
     quickActions: $$("[data-quick-action]"),
+    taskFilterLinks: $$("[data-filter-tugas]"),
     dateText: $("#teksTanggalRealtime"),
     timeText: $("#teksJamRealtime"),
     darkButtons: $$("[data-toggle-mode-gelap]"),
@@ -115,6 +116,20 @@
         toast.remove();
       }, 200);
     }, duration);
+  }
+
+  function setButtonLoading(button, isLoading, text) {
+    if (!button) return;
+    if (isLoading) {
+      button.dataset.originalText = button.textContent;
+      button.disabled = true;
+      button.setAttribute("aria-busy", "true");
+      if (text) button.textContent = text;
+    } else {
+      button.disabled = false;
+      button.removeAttribute("aria-busy");
+      if (button.dataset.originalText) button.textContent = button.dataset.originalText;
+    }
   }
 
   function setActivePage(pageName, updateUrl) {
@@ -261,21 +276,60 @@
 
     const keyword = (els.taskSearch?.value || "").toLowerCase().trim();
     const status = els.taskFilter?.value || "semua";
+    const deadlineFilter = els.taskList.dataset.deadlineFilter || "semua";
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const cards = $$(".item-tugas", els.taskList);
     let visible = 0;
 
     cards.forEach(function (card) {
       const text = (card.dataset.search || card.textContent || "").toLowerCase();
       const done = card.dataset.status === "selesai";
+      const deadline = card.dataset.deadline || "";
       const matchKeyword = !keyword || text.includes(keyword);
       const matchStatus = status === "semua" || (status === "selesai" ? done : !done);
-      const show = matchKeyword && matchStatus;
+      let matchDeadline = true;
+
+      if (deadlineFilter === "hari_ini") {
+        matchDeadline = deadline === formatDateValue(today);
+      } else if (deadlineFilter === "dekat") {
+        const due = parseDateValue(deadline);
+        if (!due) {
+          matchDeadline = false;
+        } else {
+          const diff = Math.round((due - today) / 86400000);
+          matchDeadline = diff >= 0 && diff <= 7;
+        }
+      }
+
+      const show = matchKeyword && matchStatus && matchDeadline;
       card.hidden = !show;
       if (show) visible += 1;
     });
 
     const empty = $("#pesanFilterTugasKosong");
-    if (empty) empty.hidden = visible !== 0;
+    if (empty) {
+      if (deadlineFilter === "hari_ini") {
+        empty.textContent = "Tidak ada tugas dengan deadline hari ini";
+      } else if (deadlineFilter === "dekat") {
+        empty.textContent = "Tidak ada tugas dengan deadline dekat.";
+      } else {
+        empty.textContent = "Tidak ada tugas yang sesuai filter.";
+      }
+      empty.hidden = visible !== 0;
+    }
+  }
+
+  function formatDateValue(date) {
+    return date.getFullYear() + "-" +
+      String(date.getMonth() + 1).padStart(2, "0") + "-" +
+      String(date.getDate()).padStart(2, "0");
+  }
+
+  function parseDateValue(value) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) return null;
+    const parts = value.split("-");
+    return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   }
 
   async function addCourse() {
@@ -311,6 +365,18 @@
     window.location.href = url.toString();
   }
 
+  function openTaskPageWithFilter(filterValue, deadlineFilter) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("halaman", "tugas");
+    url.searchParams.set("filter_tugas", filterValue || "semua");
+    if (deadlineFilter && deadlineFilter !== "semua") {
+      url.searchParams.set("deadline_tugas", deadlineFilter);
+    } else {
+      url.searchParams.delete("deadline_tugas");
+    }
+    window.location.href = url.toString();
+  }
+
   function wireEvents() {
     els.desktopNav.concat(els.mobileNav).forEach(function (button) {
       button.addEventListener("click", function () {
@@ -330,9 +396,14 @@
         } else if (action === "lihat-kalender") {
           setActivePage("kalender", true);
         } else if (action === "fokus-hari-ini") {
-          setActivePage("dashboard", true);
-          $("#daftarTugasHariIni")?.scrollIntoView({ behavior: "smooth", block: "center" });
+          openTaskPageWithFilter("semua", "hari_ini");
         }
+      });
+    });
+
+    els.taskFilterLinks.forEach(function (button) {
+      button.addEventListener("click", function () {
+        openTaskPageWithFilter(button.dataset.filterTugas || "semua", button.dataset.deadlineFilter || "semua");
       });
     });
 
@@ -367,6 +438,7 @@
 
     els.taskForm?.addEventListener("submit", async function (event) {
       event.preventDefault();
+      const submitButton = event.submitter || $(".tombol-utama", els.taskForm);
       var namaTugasEl = $("#inputNamaTugas");
       var mataKuliahEl = $("#pilihanMataKuliah");
       var deadlineEl = $("#inputDeadlineTugas");
@@ -379,6 +451,7 @@
       }
 
       try {
+        setButtonLoading(submitButton, true, "Menyimpan...");
         await apiPost("tambah_tugas", {
           nama_tugas: nama,
           mata_kuliah: mataKuliah,
@@ -386,6 +459,7 @@
         });
         reloadWithPage("tugas");
       } catch (error) {
+        setButtonLoading(submitButton, false);
         showToast(error.message, "error");
       }
     });
@@ -433,6 +507,7 @@
 
     els.scheduleForm?.addEventListener("submit", async function (event) {
       event.preventDefault();
+      const submitButton = event.submitter || $(".tombol-modal-utama", els.scheduleForm);
       var nama = (els.scheduleNameInput ? els.scheduleNameInput.value : "").trim();
       var tanggal = els.scheduleDateInput ? els.scheduleDateInput.value : "";
       var jam = els.scheduleTimeInput ? els.scheduleTimeInput.value : "";
@@ -450,6 +525,7 @@
       }
 
       try {
+        setButtonLoading(submitButton, true, "Menyimpan...");
         await apiPost("tambah_jadwal", {
           nama_jadwal: nama,
           tanggal: tanggal,
@@ -461,6 +537,7 @@
           reloadWithPage("kalender");
         }, 600);
       } catch (error) {
+        setButtonLoading(submitButton, false);
         showToast(error.message, "error");
       }
     });
@@ -499,6 +576,7 @@
 
     $$("[data-calendar-url]").forEach(function (button) {
       button.addEventListener("click", function () {
+        setButtonLoading(button, true);
         window.location.href = button.dataset.calendarUrl;
       });
     });
@@ -614,6 +692,15 @@
   function init() {
     if (els.nameInput) els.nameInput.value = profile.nama || "";
     if (els.notificationToggle) els.notificationToggle.checked = Boolean(Number(profile.notifikasi ?? 1));
+    const params = new URLSearchParams(window.location.search);
+    const requestedFilter = params.get("filter_tugas");
+    const requestedDeadline = params.get("deadline_tugas");
+    if (els.taskFilter && ["semua", "belum", "selesai"].includes(requestedFilter)) {
+      els.taskFilter.value = requestedFilter;
+    }
+    if (els.taskList && ["hari_ini", "dekat"].includes(requestedDeadline)) {
+      els.taskList.dataset.deadlineFilter = requestedDeadline;
+    }
     syncDarkButtons(document.body.classList.contains("mode-gelap"));
     filterTasks();
     updateClock();

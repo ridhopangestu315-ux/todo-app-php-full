@@ -157,8 +157,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $queries = [
             'total_tugas' => "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ?",
             'tugas_selesai' => "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND sudah_selesai = 1",
+            'tugas_belum_selesai' => "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND sudah_selesai = 0",
             'tugas_hariini' => "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND deadline = CURDATE() AND sudah_selesai = 0",
-            'deadline_dekat' => "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 2 DAY) AND sudah_selesai = 0"
+            'deadline_dekat' => "SELECT COUNT(*) as cnt FROM tasks WHERE user_id = ? AND deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY) AND sudah_selesai = 0"
         ];
 
         $stats = [];
