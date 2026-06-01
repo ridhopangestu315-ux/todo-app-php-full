@@ -3136,6 +3136,22 @@ body.mode-gelap .profil-sidebar {
     padding: 16px;
   }
 
+  #pengaturan .panel:first-child h3,
+  #pengaturan .panel:first-child .pesan-error-foto {
+    text-align: center;
+  }
+
+  #pengaturan .panel:first-child .pengaturan-profil {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  #pengaturan .panel:first-child .aksi-profil {
+    justify-content: center;
+  }
+
   .kartu-kalender {
     padding: 0;
   }
@@ -4720,6 +4736,21 @@ body.mode-gelap .kategori-deadline.badge-kategori-agenda   { color: #fb7185; bac
    RESPONSIVE MOBILE
    ============================================ */
 @media (max-width: 768px) {
+  #pengaturan .panel:first-child .pengaturan-profil {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100%;
+    text-align: center;
+  }
+
+  #pengaturan .panel:first-child .preview-foto-profil {
+    align-self: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
   .daftar-agenda-lengkap {
     max-height: 400px;
   }
@@ -5020,6 +5051,28 @@ body.mode-gelap #grupHapusAkun input {
 
 /* Mobile */
 @media (max-width: 480px) {
+  #pengaturan .panel:first-child {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #pengaturan .panel:first-child .pengaturan-profil {
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  #pengaturan .panel:first-child .preview-foto-profil {
+    margin-inline: auto;
+  }
+
+  #pengaturan .panel:first-child .aksi-profil {
+    justify-content: center;
+  }
+
   .modal-hapus-akun {
     margin: 0 12px;
   }
