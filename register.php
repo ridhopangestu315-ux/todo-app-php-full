@@ -99,19 +99,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </p>
     <?php endif; ?>
     
-    <form method="POST" novalidate>
+    <form method="POST" action="register.php" autocomplete="on" novalidate>
       <div class="grup-form">
-        <label>Nama Lengkap</label>
-        <input type="text" name="nama" required value="<?= htmlspecialchars($_POST['nama'] ?? '') ?>">
+        <label for="namaRegister">Nama Lengkap</label>
+        <input id="namaRegister" type="text" name="nama" required autocomplete="name" value="<?= htmlspecialchars($_POST['nama'] ?? '') ?>">
       </div>
       <div class="grup-form">
-        <label>Email</label>
-        <input type="email" name="email" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+        <label for="emailRegister">Email</label>
+        <input id="emailRegister" type="email" name="email" required autocomplete="username" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
       </div>
       <div class="grup-form">
         <label for="passwordRegister">Password</label>
         <div class="password-field">
-          <input id="passwordRegister" type="password" name="password" required minlength="6">
+          <input id="passwordRegister" type="password" name="password" required minlength="6" autocomplete="new-password">
           <button class="password-toggle" type="button" data-toggle-password aria-label="Tampilkan password" aria-pressed="false">
             <span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span>
           </button>
@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="grup-form">
         <label for="passwordConfirmRegister">Konfirmasi Password</label>
         <div class="password-field">
-          <input id="passwordConfirmRegister" type="password" name="password_confirm" required minlength="6">
+          <input id="passwordConfirmRegister" type="password" name="password_confirm" required minlength="6" autocomplete="new-password">
           <button class="password-toggle" type="button" data-toggle-password aria-label="Tampilkan password" aria-pressed="false">
             <span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span>
           </button>

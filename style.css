@@ -445,6 +445,7 @@ body.mode-gelap .ikon-mode-gelap {
 .progress-meta {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
   color: var(--text-soft);
   font-size: 13px;
@@ -452,7 +453,9 @@ body.mode-gelap .ikon-mode-gelap {
 }
 
 .progress-meta strong {
+  min-width: 58px;
   color: var(--text);
+  text-align: center;
 }
 
 .progress-track {
@@ -483,6 +486,11 @@ body.mode-gelap .ikon-mode-gelap {
   align-self: stretch;
   min-height: 210px;
   padding: 22px;
+  display: block;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
   border: 1px solid rgba(255, 255, 255, 0.52);
   border-radius: 26px;
   background:
@@ -495,6 +503,7 @@ body.mode-gelap .ikon-mode-gelap {
 .hero-panel .label-mini,
 .hero-panel p {
   color: rgba(255, 255, 255, 0.78);
+  text-align: center;
 }
 
 .hero-panel strong {
@@ -502,7 +511,8 @@ body.mode-gelap .ikon-mode-gelap {
   margin: 18px 0 4px;
   font-size: 72px;
   line-height: 0.95;
-  letter-spacing: -0.08em;
+  letter-spacing: 0;
+  text-align: center;
 }
 
 .section-dashboard,
@@ -548,11 +558,11 @@ body.mode-gelap .ikon-mode-gelap {
 }
 
 .kartu-aksi:hover,
-.kartu-statistik:hover,
+button.kartu-statistik:hover,
 .item-tugas:hover,
 .item-kalender:hover,
 .item-agenda:hover {
-  transform: translateY(-4px);
+  transform: translateY(-2px);
   box-shadow: var(--shadow-hover);
 }
 
@@ -579,22 +589,35 @@ body.mode-gelap .ikon-mode-gelap {
 
 .grid-statistik {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 14px;
 }
 
 .kartu-statistik {
   position: relative;
-  min-height: 150px;
+  display: grid;
+  grid-template-rows: 38px auto 1fr;
+  align-items: start;
+  min-height: 132px;
   overflow: hidden;
-  padding: 18px;
+  padding: 16px;
+  cursor: default;
+  text-align: left;
+  font: inherit;
   border-radius: 24px;
-  transition: 0.16s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button.kartu-statistik {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  cursor: pointer;
 }
 
 .kartu-statistik::after {
   content: "";
   position: absolute;
+  pointer-events: none;
   right: -34px;
   top: -34px;
   width: 110px;
@@ -607,10 +630,11 @@ body.mode-gelap .ikon-mode-gelap {
 .ikon-statistik {
   width: 36px;
   height: 36px;
-  margin-bottom: 18px;
+  margin-bottom: 0;
   border-radius: 13px;
   background: rgba(79, 70, 229, 0.12);
   font-weight: 900;
+  font-size: 16px;
 }
 
 .warna-biru .ikon-statistik  { background: rgba(37, 99, 235, 0.12); }
@@ -620,17 +644,23 @@ body.mode-gelap .ikon-mode-gelap {
 .warna-kuning .ikon-statistik { background: rgba(217, 119, 6, 0.12); }
 
 .kartu-statistik p {
+  align-self: end;
+  min-height: 32px;
+  margin: 10px 0 0;
   color: var(--text-soft);
   font-size: 12px;
+  line-height: 1.25;
   font-weight: 800;
   text-transform: uppercase;
 }
 
 .kartu-statistik h3 {
-  margin-top: 4px;
-  font-size: clamp(30px, 4vw, 42px);
+  align-self: end;
+  margin: 8px 0 0;
+  font-size: clamp(28px, 3vw, 38px);
   line-height: 1;
-  letter-spacing: -0.06em;
+  letter-spacing: 0;
+  text-align: center;
 }
 
 .warna-biru { color: var(--blue); }
@@ -1724,8 +1754,14 @@ body.mode-gelap .kotak-tanggal {
 
   .aksi-kalender {
     display: grid;
-    grid-template-columns: 44px 1fr 44px;
+    grid-template-columns: 64px minmax(0, 1fr) 64px;
     width: 100%;
+  }
+
+  .aksi-kalender .tombol-kedua {
+    width: 100%;
+    padding: 0 10px;
+    white-space: nowrap;
   }
 
   .filter-kalender select {
@@ -1920,7 +1956,7 @@ select,
 @media (hover: none), (pointer: coarse) {
   .tombol-menu:hover,
   .kartu-aksi:hover,
-  .kartu-statistik:hover,
+  button.kartu-statistik:hover,
   .item-tugas:hover,
   .item-kalender:hover,
   .item-agenda:hover,
@@ -3491,11 +3527,11 @@ button,
   }
 
   .kartu-aksi:hover,
-  .kartu-statistik:hover,
+  button.kartu-statistik:hover,
   .item-tugas:hover,
   .item-kalender:hover,
   .item-agenda:hover {
-    transform: translateY(-4px);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-hover);
   }
 
@@ -3507,7 +3543,7 @@ button,
 @media (hover: none), (pointer: coarse) {
   .tombol-menu:hover,
   .kartu-aksi:hover,
-  .kartu-statistik:hover,
+  button.kartu-statistik:hover,
   .item-tugas:hover,
   .item-kalender:hover,
   .item-agenda:hover,
@@ -3620,6 +3656,8 @@ body.mode-gelap .toast-success {
 .tombol-menu,
 .tombol-nav-mobile,
 .kartu-aksi,
+button.kartu-statistik,
+.hero-panel,
 .tombol-mode-gelap,
 .tombol-mode-pengaturan,
 .foto-profil-header,
@@ -3631,6 +3669,8 @@ body.mode-gelap .toast-success {
 }
 
 .kotak-tanggal:focus-visible,
+button.kartu-statistik:focus-visible,
+.hero-panel:focus-visible,
 .tombol-hapus-jadwal:focus-visible,
 .checkbox-tugas:focus-visible {
   outline: 3px solid rgba(79, 70, 229, 0.22);
@@ -3760,13 +3800,12 @@ body.mode-gelap .tanggal-luar-bulan {
   }
 
   .filter-kalender select,
-  .aksi-kalender,
-  .aksi-kalender .tombol-kedua {
+  .aksi-kalender {
     width: 100%;
   }
 
-  .aksi-kalender .tombol-ikon {
-    flex: 1;
+  .aksi-kalender {
+    grid-template-columns: 64px minmax(0, 1fr) 64px;
   }
 }
 
@@ -4199,6 +4238,15 @@ body.mode-gelap .ikon-mode-gelap {
   letter-spacing: 0;
 }
 
+.auth-helper {
+  margin: 6px auto 0;
+  max-width: 340px;
+  color: var(--text-soft);
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 700;
+}
+
 .auth-card form {
   position: relative;
   z-index: 1;
@@ -4291,14 +4339,31 @@ body.mode-gelap .ikon-mode-gelap {
   font-weight: 700;
 }
 
+.auth-forgot {
+  position: relative;
+  z-index: 1;
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.auth-forgot a,
 .auth-switch a {
   color: var(--primary);
   font-weight: 900;
   text-decoration: none;
 }
 
+.auth-forgot a:hover,
 .auth-switch a:hover {
   text-decoration: underline;
+}
+
+.auth-card .otp-input {
+  text-align: center;
+  font-size: 24px;
+  letter-spacing: 8px;
 }
 
 @media (min-width: 900px) {

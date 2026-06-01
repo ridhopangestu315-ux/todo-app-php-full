@@ -248,6 +248,7 @@ $tomorrowDate = new DateTime('tomorrow');
 $tomorrow = tanggalKode($tomorrowDate);
 $total_tugas = count($tasks);
 $tugas_selesai = 0;
+$tugas_belum_selesai = 0;
 $tugas_hariini = 0;
 $deadline_dekat = 0;
 $tugas_hariini_semua = 0;
@@ -255,8 +256,6 @@ $tugas_hariini_selesai = 0;
 $tugas_besok = [];
 $tugas_hariini_list = [];
 $tugas_selesai_list = [];
-$tugas_belum_selesai_list = [];
-$deadline_terdekat_list = [];
 $tugas_terbaru = $tasks;
 usort($tugas_terbaru, function ($a, $b) {
     return strcmp($b['dibuat_pada'], $a['dibuat_pada']);
@@ -265,12 +264,15 @@ usort($tugas_terbaru, function ($a, $b) {
 foreach ($tasks as $task) {
     $selesai = (int)$task['sudah_selesai'] === 1;
     if ($selesai) $tugas_selesai++;
+    if (!$selesai) {
+        $tugas_belum_selesai++;
+    }
     if ($task['deadline'] === $today) {
         $tugas_hariini_semua++;
+        $tugas_hariini_list[] = $task;
         if ($selesai) $tugas_hariini_selesai++;
         if (!$selesai) {
             $tugas_hariini++;
-            $tugas_hariini_list[] = $task;
         }
     }
     if ($task['deadline'] === $tomorrow && !$selesai) {
@@ -290,7 +292,10 @@ foreach ($tasks as $task) {
     }
     if (!$selesai && $task['deadline']) {
         $diff = (int)(new DateTime('today'))->diff(new DateTime($task['deadline']))->format('%r%a');
-        if ($diff >= 0 && $diff <= 2) $deadline_dekat++;
+        if ($diff >= 0 && $diff <= 7) {
+            $deadline_dekat++;
+            $deadline_dekat_list[] = $task;
+        }
     }
 }
 
@@ -361,6 +366,12 @@ foreach ($itemsKalender as $item) {
     $itemsByDate[$item['tanggal']][] = $item;
 }
 
+$awalBulanAktif = $bulanAktif->format('Y-m-01');
+$akhirBulanAktif = $bulanAktif->format('Y-m-t');
+$itemsKalenderBulan = array_values(array_filter($itemsKalender, function ($item) use ($awalBulanAktif, $akhirBulanAktif) {
+    return $item['tanggal'] >= $awalBulanAktif && $item['tanggal'] <= $akhirBulanAktif;
+}));
+
 $agendaHariIni = $itemsByDate[$today] ?? [];
 $reminderDeadline = array_values(array_filter($itemsKalender, function ($item) {
     if ($item['kategori'] !== 'deadline') return false;
@@ -381,7 +392,7 @@ function kalenderUrl($bulan, $kategori) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>StudyFlow - Dashboard Mahasiswa</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260526-ssr-mobile">
+  <link rel="stylesheet" href="style.css?v=20260601-dashboard-fokus">
   <link rel="icon" type="image/png" href="icon1.PNG">
 </head>
 <body class="<?= (int)$settings['dark_mode'] ? 'mode-gelap' : '' ?>" data-halaman-aktif="<?= e($active_page) ?>">
@@ -446,7 +457,7 @@ function kalenderUrl($bulan, $kategori) {
               <small id="teksProgressHariIni"><?= $tugas_hariini_semua ? e($tugas_hariini_selesai . ' dari ' . $tugas_hariini_semua . ' tugas hari ini selesai.') : 'Belum ada deadline hari ini. Ruang fokus masih lega.' ?></small>
             </div>
           </div>
-          <div class="hero-panel"><span class="label-mini">Fokus hari ini</span><strong id="angkaFokusHariIni"><?= (int)$tugas_hariini ?></strong><p>Tugas dengan deadline hari ini.</p></div>
+          <button class="hero-panel" type="button" data-filter-tugas="semua" data-deadline-filter="hari_ini"><span class="label-mini">Fokus hari ini</span><strong id="angkaFokusHariIni"><?= (int)$tugas_hariini ?></strong><p>Tugas dengan deadline hari ini.</p></button>
         </section>
 
         <section class="section-dashboard">
@@ -462,30 +473,16 @@ function kalenderUrl($bulan, $kategori) {
         <section class="section-dashboard">
           <div class="section-heading"><div><p class="teks-kecil">Statistik</p><h2>Snapshot produktivitas</h2></div></div>
           <div class="grid-statistik">
-            <button class="kartu-statistik kartu-statistik-klik warna-merah" type="button" data-task-shortcut="hari-ini" aria-label="Buka tugas dengan deadline hari ini"><span class="ikon-statistik">⏱</span><h3 id="angkaDeadlineHariIni"><?= (int)$tugas_hariini ?></h3><p>Deadline Hari Ini</p><small>Prioritas utama</small></button>
-            <button class="kartu-statistik kartu-statistik-klik warna-kuning" type="button" data-task-shortcut="besok" aria-label="Buka tugas dengan deadline besok"><span class="ikon-statistik">☀</span><h3 id="angkaDeadlineBesok"><?= (int)count($tugas_besok) ?></h3><p>Deadline Besok</p><small>Siapkan lebih awal</small></button>
-            <button class="kartu-statistik kartu-statistik-klik warna-biru" type="button" data-task-shortcut="belum" aria-label="Buka tugas yang belum selesai"><span class="ikon-statistik">□</span><h3 id="angkaTugasBelumSelesai"><?= (int)$total_belum_selesai ?></h3><p>Tugas Belum Selesai</p><small>Masih perlu aksi</small></button>
-            <button class="kartu-statistik kartu-statistik-klik warna-hijau" type="button" data-task-shortcut="selesai" aria-label="Buka tugas selesai"><span class="ikon-statistik">✓</span><h3 id="angkaTugasSelesai"><?= (int)$tugas_selesai ?></h3><p>Tugas Selesai</p><small><?= (int)$progress_total ?>% dari total</small></button>
-          </div>
-        </section>
-
-        <section class="section-dashboard section-snapshot-dashboard">
-          <div class="section-heading"><div><p class="teks-kecil">Snapshot Dashboard</p><h2>Ringkasan tugas penting</h2></div></div>
-          <div class="grid-snapshot-dashboard">
-            <button class="panel panel-snapshot-dashboard" type="button" data-task-shortcut="belum" aria-label="Buka snapshot tugas belum selesai">
-              <div class="kepala-panel"><div><p class="teks-kecil">Belum selesai</p><h3>Snapshot Tugas Belum Selesai</h3></div><span class="badge-panel"><?= (int)$total_belum_selesai ?></span></div>
-              <div class="daftar-ringkas"><?= renderDaftarRingkas(array_slice($tugas_belum_selesai_list, 0, 5), 'Semua tugas sudah selesai. Mantap!') ?></div>
-            </button>
-            <button class="panel panel-snapshot-dashboard" type="button" data-task-shortcut="terdekat" aria-label="Buka snapshot deadline terdekat">
-              <div class="kepala-panel"><div><p class="teks-kecil">Deadline</p><h3>Snapshot Deadline Terdekat</h3></div><span class="badge-panel"><?= (int)count($deadline_terdekat_list) ?></span></div>
-              <div class="daftar-ringkas"><?= renderDaftarRingkas(array_slice($deadline_terdekat_list, 0, 5), 'Belum ada deadline aktif yang akan datang.') ?></div>
-            </button>
+            <article class="kartu-statistik warna-biru"><span class="ikon-statistik">□</span><p>Total tugas</p><h3 id="angkaTotalTugas"><?= (int)$total_tugas ?></h3></article>
+            <article class="kartu-statistik warna-merah"><span class="ikon-statistik">!</span><p>Deadline dekat</p><h3 id="angkaDeadlineDekat"><?= (int)$deadline_dekat ?></h3></article>
+            <article class="kartu-statistik warna-hijau"><span class="ikon-statistik">✓</span><p>Tugas selesai</p><h3 id="angkaTugasSelesai"><?= (int)$tugas_selesai ?></h3></article>
+            <article class="kartu-statistik warna-ungu"><span class="ikon-statistik">↗</span><p>Progress total</p><h3 id="angkaTugasBelumSelesai"><?= (int)$progress_total ?>%</h3></article>
           </div>
         </section>
 
         <section class="dashboard-grid-utama">
           <div class="kolom-dashboard">
-            <section class="panel panel-tugas-dashboard"><div class="kepala-panel"><div><p class="teks-kecil">Tugas</p><h3>Deadline Hari Ini</h3></div><span class="badge-panel" id="jumlahTugasHariIni"><?= count($tugas_hariini_list) ?></span></div><div id="daftarTugasHariIni" class="daftar-ringkas"><?= renderDaftarRingkas(array_slice($tugas_hariini_list, 0, 4), 'Tidak ada deadline hari ini.') ?></div></section>
+            <section class="panel panel-tugas-dashboard" id="panelTugasHariIni"><div class="kepala-panel"><div><p class="teks-kecil">Tugas</p><h3>Deadline Hari Ini</h3></div><span class="badge-panel" id="jumlahTugasHariIni"><?= count($tugas_hariini_list) ?></span></div><div id="daftarTugasHariIni" class="daftar-ringkas"><?= renderDaftarRingkas($tugas_hariini_list, 'Tidak ada tugas dengan deadline hari ini') ?></div></section>
             <section class="panel panel-tugas-dashboard"><div class="kepala-panel"><div><p class="teks-kecil">Berikutnya</p><h3>Deadline Besok</h3></div><span class="badge-panel" id="jumlahTugasBesok"><?= count($tugas_besok) ?></span></div><div id="daftarTugasBesok" class="daftar-ringkas"><?= renderDaftarRingkas(array_slice($tugas_besok, 0, 4), 'Belum ada deadline besok.') ?></div></section>
             <section class="panel panel-tugas-dashboard"><div class="kepala-panel"><div><p class="teks-kecil">Selesai</p><h3>Tugas Selesai</h3></div><span class="badge-panel" id="jumlahTugasSelesaiDashboard"><?= count($tugas_selesai_list) ?></span></div><div id="daftarTugasSelesaiDashboard" class="daftar-ringkas"><?= renderDaftarRingkas($tugas_selesai_list, 'Belum ada tugas selesai.') ?></div></section>
             <section class="panel panel-tugas-dashboard"><div class="kepala-panel"><div><p class="teks-kecil">Terbaru</p><h3>Tugas Terbaru</h3></div></div><div id="daftarTugasTerbaru" class="daftar-ringkas"><?= renderDaftarRingkas(array_slice($tugas_terbaru, 0, 4), 'Belum ada tugas. Tambahkan tugas pertamamu.') ?></div></section>
@@ -513,7 +510,7 @@ function kalenderUrl($bulan, $kategori) {
                 </div>
               </div>
             </section>
-            <section class="panel"><div class="kepala-panel"><div><p class="teks-kecil">Reminder</p><h3>Deadline dekat</h3></div></div><div id="daftarNotifikasiDeadline" class="daftar-ringkas"><?= (int)$settings['notifikasi'] ? renderDaftarRingkas(array_slice(array_filter($tasks, function ($task) { if ((int)$task['sudah_selesai'] === 1) return false; $diff = (int)(new DateTime('today'))->diff(new DateTime($task['deadline']))->format('%r%a'); return $diff >= 0 && $diff <= 2; }), 0, 4), 'Belum ada deadline dekat.') : kotakKosong('Notifikasi deadline sedang dinonaktifkan.') ?></div></section>
+            <section class="panel" id="panelDeadlineDekat"><div class="kepala-panel"><div><p class="teks-kecil">Reminder</p><h3>Deadline dekat</h3></div><span class="badge-panel">7 hari</span></div><div id="daftarNotifikasiDeadline" class="daftar-ringkas"><?= (int)$settings['notifikasi'] ? renderDaftarRingkas($deadline_dekat_list, 'Belum ada deadline dekat.') : kotakKosong('Notifikasi deadline sedang dinonaktifkan.') ?></div></section>
           </aside>
         </section>
       </section>
@@ -540,9 +537,9 @@ function kalenderUrl($bulan, $kategori) {
             <div class="toolbar-kalender">
               <div><p class="teks-kecil">Kalender Bulanan</p><h3 id="teksBulanKalender"><?= e(formatBulanIndo($bulanAktif)) ?></h3></div>
               <div class="aksi-kalender">
-                <button id="tombolBulanSebelumnya" class="tombol-ikon" type="button" aria-label="Bulan sebelumnya" data-calendar-url="<?= e(kalenderUrl($bulanSebelumnya, $kategoriFilter)) ?>">‹</button>
+                <button id="tombolBulanSebelumnya" class="tombol-kedua tombol-mini" type="button" aria-label="Bulan sebelumnya" data-calendar-url="<?= e(kalenderUrl($bulanSebelumnya, $kategoriFilter)) ?>">Prev</button>
                 <button id="tombolHariIni" class="tombol-kedua" type="button" data-calendar-url="<?= e(kalenderUrl(date('Y-m'), $kategoriFilter)) ?>">Hari ini</button>
-                <button id="tombolBulanBerikutnya" class="tombol-ikon" type="button" aria-label="Bulan berikutnya" data-calendar-url="<?= e(kalenderUrl($bulanBerikutnya, $kategoriFilter)) ?>">›</button>
+                <button id="tombolBulanBerikutnya" class="tombol-kedua tombol-mini" type="button" aria-label="Bulan berikutnya" data-calendar-url="<?= e(kalenderUrl($bulanBerikutnya, $kategoriFilter)) ?>">Next</button>
               </div>
             </div>
             <div class="filter-kalender"><label for="filterKategoriJadwal">Filter kategori</label><select id="filterKategoriJadwal"><?php foreach ($kategoriValid as $kategori): ?><option value="<?= e($kategori) ?>" <?= $kategoriFilter === $kategori ? 'selected' : '' ?>><?= e($kategori === 'semua' ? 'Semua kategori' : ucfirst($kategori === 'deadline' ? 'Deadline tugas' : $kategori)) ?></option><?php endforeach; ?></select></div>
@@ -587,13 +584,13 @@ function kalenderUrl($bulan, $kategori) {
                   <p class="teks-kecil">Kalender <?= e(formatBulanIndo($bulanAktif)) ?></p>
                   <h3>Semua Agenda</h3>
                 </div>
-                <span class="badge-jumlah-agenda"><?= count($itemsKalender) ?> agenda</span>
+                <span class="badge-jumlah-agenda"><?= count($itemsKalenderBulan) ?> agenda</span>
               </div>
               <div class="daftar-agenda-lengkap" id="daftarAgendaHariIni">
                 <?php
                 // Group by tanggal, hanya tampilkan tanggal yang ada agenda
                 $groupByTanggal = [];
-                foreach ($itemsKalender as $item) {
+                foreach ($itemsKalenderBulan as $item) {
                     $groupByTanggal[$item['tanggal']][] = $item;
                 }
                 ksort($groupByTanggal);
@@ -801,6 +798,6 @@ function kalenderUrl($bulan, $kategori) {
     });
   });
   </script>
-  <script src="script.js?v=20260526-ssr-mobile"></script>
+  <script src="script.js?v=20260601-dashboard-fokus"></script>
 </body>
 </html>

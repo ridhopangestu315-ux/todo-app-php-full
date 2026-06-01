@@ -9,6 +9,11 @@ if (isset($_SESSION['user_id'])) {
 
 $error = '';
 $success = isset($_GET['daftar']) && $_GET['daftar'] === 'berhasil';
+$resetSuccess = isset($_GET['reset']) && $_GET['reset'] === 'berhasil';
+if (isset($_SESSION['flash_reset_password']) && $_SESSION['flash_reset_password'] === 'berhasil') {
+    $resetSuccess = true;
+    unset($_SESSION['flash_reset_password']);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
@@ -50,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - StudyFlow</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260527-auth-modern">
+  <link rel="stylesheet" href="style.css?v=20260601-reset-password">
 </head>
 <body class="auth-page">
 <div class="wadah-aplikasi auth-shell">
@@ -69,6 +74,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ✓ Akun berhasil dibuat! Silakan login.
       </p>
     <?php endif; ?>
+
+    <?php if($resetSuccess): ?>
+      <p class="notif-auth notif-auth-sukses">
+        Password berhasil diubah. Silakan login dengan password baru.
+      </p>
+    <?php endif; ?>
     
     <?php if($error): ?>
       <p class="notif-auth notif-auth-error">
@@ -76,15 +87,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </p>
     <?php endif; ?>
     
-    <form method="POST">
+    <form method="POST" action="login.php" autocomplete="on">
       <div class="grup-form">
-        <label>Email</label>
-        <input type="email" name="email" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+        <label for="emailLogin">Email</label>
+        <input id="emailLogin" type="email" name="email" required autocomplete="username" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
       </div>
       <div class="grup-form">
         <label for="passwordLogin">Password</label>
         <div class="password-field">
-          <input id="passwordLogin" type="password" name="password" required>
+          <input id="passwordLogin" type="password" name="password" required autocomplete="current-password">
           <button class="password-toggle" type="button" data-toggle-password aria-label="Tampilkan password" aria-pressed="false">
             <span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span>
           </button>
@@ -92,6 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
       <button type="submit" class="tombol-utama auth-submit">Login</button>
     </form>
+    <p class="auth-forgot"><a href="forgot-password.php">Lupa Kata Sandi?</a></p>
     <p class="auth-switch">Belum punya akun? <a href="register.php">Daftar</a></p>
   </div>
 </div>
