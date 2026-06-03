@@ -172,7 +172,7 @@ function renderTaskCard($task) {
     $checked = $selesai ? ' checked' : '';
     $search = strtolower(($task['nama_tugas'] ?? '') . ' ' . ($task['mata_kuliah'] ?? ''));
     return '
-      <article class="item-tugas' . $kelas . '" data-id-tugas="' . (int)$task['id'] . '" data-status="' . e($status) . '" data-search="' . e($search) . '">
+      <article class="item-tugas' . $kelas . '" data-id-tugas="' . (int)$task['id'] . '" data-status="' . e($status) . '" data-deadline="' . e($task['deadline']) . '" data-search="' . e($search) . '">
         <div class="bagian-utama-tugas">
           <input class="checkbox-tugas" type="checkbox"' . $checked . ' aria-label="Tandai selesai">
           <div class="konten-tugas">
@@ -240,7 +240,7 @@ $inisial_user = strtoupper(substr(trim($nama_user), 0, 1) ?: 'M');
 
 $kolomWaktuTugas = punyaKolom($conn, 'tasks', 'dibuat_pada') ? 'dibuat_pada' : 'created_at';
 $kolomWaktuJadwal = punyaKolom($conn, 'schedules', 'dibuat_pada') ? 'dibuat_pada' : 'created_at';
-$tasks = ambilSemua($conn, "SELECT id, nama_tugas, mata_kuliah, deadline, sudah_selesai, `$kolomWaktuTugas` AS dibuat_pada FROM tasks WHERE user_id = ? ORDER BY deadline ASC, `$kolomWaktuTugas` DESC", 'i', [$user_id]);
+$tasks = ambilSemua($conn, "SELECT id, nama_tugas, mata_kuliah, deadline, sudah_selesai, `$kolomWaktuTugas` AS dibuat_pada FROM tasks WHERE user_id = ? ORDER BY (deadline IS NULL), deadline ASC, `$kolomWaktuTugas` DESC", 'i', [$user_id]);
 $schedules = ambilSemua($conn, "SELECT id, nama_jadwal, tanggal, jam, kategori, `$kolomWaktuJadwal` AS dibuat_pada FROM schedules WHERE user_id = ? ORDER BY tanggal ASC, jam ASC", 'i', [$user_id]);
 
 $today = tanggalKode();
@@ -248,6 +248,7 @@ $tomorrowDate = new DateTime('tomorrow');
 $tomorrow = tanggalKode($tomorrowDate);
 $total_tugas = count($tasks);
 $tugas_selesai = 0;
+$tugas_belum_selesai = 0;
 $tugas_hariini = 0;
 $deadline_dekat = 0;
 $tugas_hariini_semua = 0;
@@ -259,10 +260,13 @@ $tugas_terbaru = $tasks;
 usort($tugas_terbaru, function ($a, $b) {
     return strcmp($b['dibuat_pada'], $a['dibuat_pada']);
 });
+$snapshot_belum_selesai = [];
+$snapshot_deadline_terdekat = [];
 
 foreach ($tasks as $task) {
     $selesai = (int)$task['sudah_selesai'] === 1;
     if ($selesai) $tugas_selesai++;
+    if (!$selesai) $tugas_belum_selesai++;
     if ($task['deadline'] === $today) {
         $tugas_hariini_semua++;
         if ($selesai) $tugas_hariini_selesai++;
@@ -282,6 +286,19 @@ foreach ($tasks as $task) {
         if ($diff >= 0 && $diff <= 2) $deadline_dekat++;
     }
 }
+
+$snapshot_belum_selesai = array_values(array_filter($tugas_terbaru, function ($task) {
+    return (int)$task['sudah_selesai'] !== 1;
+}));
+$snapshot_deadline_terdekat = array_values(array_filter($tasks, function ($task) {
+    if ((int)$task['sudah_selesai'] === 1 || !$task['deadline']) return false;
+    $diff = (int)(new DateTime('today'))->diff(new DateTime($task['deadline']))->format('%r%a');
+    return $diff >= 0;
+}));
+usort($snapshot_deadline_terdekat, function ($a, $b) {
+    $byDeadline = strcmp((string)$a['deadline'], (string)$b['deadline']);
+    return $byDeadline !== 0 ? $byDeadline : strcmp((string)$b['dibuat_pada'], (string)$a['dibuat_pada']);
+});
 
 $progress_hari_ini = $tugas_hariini_semua > 0 ? (int)round(($tugas_hariini_selesai / $tugas_hariini_semua) * 100) : 0;
 $progress_total = $total_tugas > 0 ? (int)round(($tugas_selesai / $total_tugas) * 100) : 0;
@@ -444,10 +461,24 @@ function kalenderUrl($bulan, $kategori) {
         <section class="section-dashboard">
           <div class="section-heading"><div><p class="teks-kecil">Statistik</p><h2>Snapshot produktivitas</h2></div></div>
           <div class="grid-statistik">
-            <article class="kartu-statistik warna-biru"><span class="ikon-statistik">□</span><p>Total tugas</p><h3 id="angkaTotalTugas"><?= (int)$total_tugas ?></h3></article>
-            <article class="kartu-statistik warna-merah"><span class="ikon-statistik">!</span><p>Deadline dekat</p><h3 id="angkaDeadlineDekat"><?= (int)$deadline_dekat ?></h3></article>
-            <article class="kartu-statistik warna-hijau"><span class="ikon-statistik">✓</span><p>Tugas selesai</p><h3 id="angkaTugasSelesai"><?= (int)$tugas_selesai ?></h3></article>
-            <article class="kartu-statistik warna-ungu"><span class="ikon-statistik">↗</span><p>Progress total</p><h3 id="angkaTugasBelumSelesai"><?= (int)$progress_total ?>%</h3></article>
+            <button class="kartu-statistik warna-biru" type="button" data-filter-tugas="semua" data-deadline-filter="hari_ini" aria-label="Buka tugas dengan deadline hari ini"><span class="ikon-statistik">D1</span><h3 id="angkaDeadlineHariIni"><?= (int)$tugas_hariini ?></h3><p>Deadline Hari Ini</p></button>
+            <button class="kartu-statistik warna-kuning" type="button" data-filter-tugas="semua" data-deadline-filter="besok" aria-label="Buka tugas dengan deadline besok"><span class="ikon-statistik">D2</span><h3 id="angkaDeadlineBesok"><?= count($tugas_besok) ?></h3><p>Deadline Besok</p></button>
+            <button class="kartu-statistik warna-merah" type="button" data-filter-tugas="belum" data-deadline-filter="semua" aria-label="Buka tugas yang belum selesai"><span class="ikon-statistik">!</span><h3 id="angkaTugasBelumSelesai"><?= (int)$tugas_belum_selesai ?></h3><p>Tugas Belum Selesai</p></button>
+            <button class="kartu-statistik warna-hijau" type="button" data-filter-tugas="selesai" data-deadline-filter="semua" aria-label="Buka tugas yang sudah selesai"><span class="ikon-statistik">OK</span><h3 id="angkaTugasSelesai"><?= (int)$tugas_selesai ?></h3><p>Tugas Selesai</p></button>
+          </div>
+        </section>
+
+        <section class="section-dashboard">
+          <div class="section-heading"><div><p class="teks-kecil">Snapshot Dashboard</p><h2>Prioritas ringkas</h2></div></div>
+          <div class="grid-snapshot-dashboard">
+            <section class="panel panel-snapshot-dashboard" role="button" tabindex="0" data-filter-tugas="belum" data-deadline-filter="semua" aria-label="Buka tugas belum selesai">
+              <div class="kepala-panel"><div><p class="teks-kecil">Belum selesai</p><h3>Snapshot Tugas Belum Selesai</h3></div><span class="badge-panel"><?= min(count($snapshot_belum_selesai), 5) ?></span></div>
+              <div class="daftar-ringkas"><?= renderDaftarRingkas(array_slice($snapshot_belum_selesai, 0, 5), 'Semua tugas sudah selesai.') ?></div>
+            </section>
+            <section class="panel panel-snapshot-dashboard" role="button" tabindex="0" data-filter-tugas="belum" data-deadline-filter="dekat" aria-label="Buka deadline terdekat">
+              <div class="kepala-panel"><div><p class="teks-kecil">Deadline</p><h3>Snapshot Deadline Terdekat</h3></div><span class="badge-panel"><?= min(count($snapshot_deadline_terdekat), 5) ?></span></div>
+              <div class="daftar-ringkas"><?= renderDaftarRingkas(array_slice($snapshot_deadline_terdekat, 0, 5), 'Belum ada deadline mendatang.') ?></div>
+            </section>
           </div>
         </section>
 

@@ -149,7 +149,21 @@
     if (updateUrl) {
       const url = new URL(window.location.href);
       url.searchParams.set("halaman", pageName);
+      if (pageName === "tugas") {
+        url.searchParams.delete("filter_tugas");
+        url.searchParams.delete("deadline_tugas");
+        if (els.taskFilter) {
+          els.taskFilter.value = "semua";
+        }
+        if (els.taskList) {
+          els.taskList.dataset.deadlineFilter = "semua";
+        }
+      }
       window.history.replaceState({}, "", url);
+    }
+
+    if (pageName === "tugas") {
+      filterTasks();
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -292,6 +306,10 @@
 
       if (deadlineFilter === "hari_ini") {
         matchDeadline = deadline === formatDateValue(today);
+      } else if (deadlineFilter === "besok") {
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        matchDeadline = deadline === formatDateValue(tomorrow);
       } else if (deadlineFilter === "dekat") {
         const due = parseDateValue(deadline);
         if (!due) {
@@ -311,6 +329,8 @@
     if (empty) {
       if (deadlineFilter === "hari_ini") {
         empty.textContent = "Tidak ada tugas dengan deadline hari ini";
+      } else if (deadlineFilter === "besok") {
+        empty.textContent = "Tidak ada tugas dengan deadline besok.";
       } else if (deadlineFilter === "dekat") {
         empty.textContent = "Tidak ada tugas dengan deadline dekat.";
       } else {
@@ -330,6 +350,19 @@
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) return null;
     const parts = value.split("-");
     return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  }
+
+  function clearDeadlineTaskFilter(updateUrl) {
+    if (els.taskList) {
+      els.taskList.dataset.deadlineFilter = "semua";
+    }
+
+    if (updateUrl) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("deadline_tugas");
+      url.searchParams.set("filter_tugas", els.taskFilter?.value || "semua");
+      window.history.replaceState({}, "", url);
+    }
   }
 
   async function addCourse() {
@@ -405,6 +438,14 @@
       button.addEventListener("click", function () {
         openTaskPageWithFilter(button.dataset.filterTugas || "semua", button.dataset.deadlineFilter || "semua");
       });
+      if (button.tagName !== "BUTTON") {
+        button.addEventListener("keydown", function (event) {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openTaskPageWithFilter(button.dataset.filterTugas || "semua", button.dataset.deadlineFilter || "semua");
+          }
+        });
+      }
     });
 
     els.headerAvatar?.addEventListener("click", function () {
@@ -490,7 +531,10 @@
     });
 
     els.taskSearch?.addEventListener("input", filterTasks);
-    els.taskFilter?.addEventListener("change", filterTasks);
+    els.taskFilter?.addEventListener("change", function () {
+      clearDeadlineTaskFilter(true);
+      filterTasks();
+    });
 
     els.openScheduleButton?.addEventListener("click", function () {
       openScheduleModal();
@@ -698,7 +742,7 @@
     if (els.taskFilter && ["semua", "belum", "selesai"].includes(requestedFilter)) {
       els.taskFilter.value = requestedFilter;
     }
-    if (els.taskList && ["hari_ini", "dekat"].includes(requestedDeadline)) {
+    if (els.taskList && ["hari_ini", "besok", "dekat"].includes(requestedDeadline)) {
       els.taskList.dataset.deadlineFilter = requestedDeadline;
     }
     syncDarkButtons(document.body.classList.contains("mode-gelap"));
