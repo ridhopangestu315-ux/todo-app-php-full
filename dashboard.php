@@ -461,10 +461,10 @@ function kalenderUrl($bulan, $kategori) {
         <section class="section-dashboard">
           <div class="section-heading"><div><p class="teks-kecil">Statistik</p><h2>Snapshot produktivitas</h2></div></div>
           <div class="grid-statistik">
-            <button class="kartu-statistik warna-biru" type="button" data-filter-tugas="semua" data-deadline-filter="hari_ini" aria-label="Buka tugas dengan deadline hari ini"><span class="ikon-statistik">D1</span><h3 id="angkaDeadlineHariIni"><?= (int)$tugas_hariini ?></h3><p>Deadline Hari Ini</p></button>
             <button class="kartu-statistik warna-kuning" type="button" data-filter-tugas="semua" data-deadline-filter="besok" aria-label="Buka tugas dengan deadline besok"><span class="ikon-statistik">D2</span><h3 id="angkaDeadlineBesok"><?= count($tugas_besok) ?></h3><p>Deadline Besok</p></button>
             <button class="kartu-statistik warna-merah" type="button" data-filter-tugas="belum" data-deadline-filter="semua" aria-label="Buka tugas yang belum selesai"><span class="ikon-statistik">!</span><h3 id="angkaTugasBelumSelesai"><?= (int)$tugas_belum_selesai ?></h3><p>Tugas Belum Selesai</p></button>
             <button class="kartu-statistik warna-hijau" type="button" data-filter-tugas="selesai" data-deadline-filter="semua" aria-label="Buka tugas yang sudah selesai"><span class="ikon-statistik">OK</span><h3 id="angkaTugasSelesai"><?= (int)$tugas_selesai ?></h3><p>Tugas Selesai</p></button>
+            <button class="kartu-statistik kartu-progress-statistik warna-biru" type="button" data-filter-tugas="semua" data-deadline-filter="semua" aria-label="Buka semua tugas"><span class="ikon-statistik">%</span><h3><?= (int)$progress_total ?>%</h3><p>Progress Tugas</p><small><?= (int)$tugas_selesai ?> dari <?= (int)$total_tugas ?> selesai</small><span class="progress-statistik-bar" aria-hidden="true"><span style="width: <?= (int)$progress_total ?>%"></span></span></button>
           </div>
         </section>
 
@@ -512,9 +512,9 @@ function kalenderUrl($bulan, $kategori) {
                 </div>
               </div>
             </section>
-            <section class="panel"><div class="kepala-panel"><div><p class="teks-kecil">Reminder</p><h3>Deadline dekat</h3></div></div><div id="daftarNotifikasiDeadline" class="daftar-ringkas"><?= (int)$settings['notifikasi'] ? renderDaftarRingkas(array_slice(array_filter($tasks, function ($task) { if ((int)$task['sudah_selesai'] === 1) return false; $diff = (int)(new DateTime('today'))->diff(new DateTime($task['deadline']))->format('%r%a'); return $diff >= 0 && $diff <= 2; }), 0, 4), 'Belum ada deadline dekat.') : kotakKosong('Notifikasi deadline sedang dinonaktifkan.') ?></div></section>
           </aside>
         </section>
+
       </section>
 
       <section id="tugas" class="halaman <?= $active_page === 'tugas' ? 'halaman-aktif' : '' ?>">
