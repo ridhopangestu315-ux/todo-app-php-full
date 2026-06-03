@@ -9,11 +9,6 @@ if (isset($_SESSION['user_id'])) {
 
 $error = '';
 $success = isset($_GET['daftar']) && $_GET['daftar'] === 'berhasil';
-$resetSuccess = isset($_GET['reset']) && $_GET['reset'] === 'berhasil';
-if (isset($_SESSION['flash_reset_password']) && $_SESSION['flash_reset_password'] === 'berhasil') {
-    $resetSuccess = true;
-    unset($_SESSION['flash_reset_password']);
-}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
@@ -55,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - StudyFlow</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260601-reset-password">
+  <link rel="stylesheet" href="style.css?v=20260603-auth">
 </head>
 <body class="auth-page">
 <div class="wadah-aplikasi auth-shell">
@@ -75,12 +70,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </p>
     <?php endif; ?>
 
-    <?php if($resetSuccess): ?>
-      <p class="notif-auth notif-auth-sukses">
-        Password berhasil diubah. Silakan login dengan password baru.
-      </p>
-    <?php endif; ?>
-    
     <?php if($error): ?>
       <p class="notif-auth notif-auth-error">
         ✕ <?= htmlspecialchars($error) ?>
@@ -103,7 +92,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
       <button type="submit" class="tombol-utama auth-submit">Login</button>
     </form>
-    <p class="auth-forgot"><a href="forgot-password.php">Lupa Kata Sandi?</a></p>
     <p class="auth-switch">Belum punya akun? <a href="register.php">Daftar</a></p>
   </div>
 </div>

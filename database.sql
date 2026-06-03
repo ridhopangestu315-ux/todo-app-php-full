@@ -80,27 +80,3 @@ CREATE TABLE IF NOT EXISTS courses (
     UNIQUE KEY uniq_user_course (user_id, nama_mata_kuliah),
     INDEX idx_user_id (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ============================================
--- TABLE: PASSWORD RESETS
--- ============================================
-CREATE TABLE IF NOT EXISTS password_resets (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    otp VARCHAR(255) NOT NULL,
-    expires_at DATETIME NOT NULL,
-    used TINYINT(1) NOT NULL DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_user_email (user_id, email),
-    INDEX idx_email_used (email, used),
-    INDEX idx_expires_at (expires_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ============================================
--- SAMPLE DATA (OPSIONAL - UNTUK TEST)
--- ============================================
--- Uncomment untuk menambahkan sample data
--- INSERT INTO users (nama, email, password) VALUES 
--- ('Budi Santoso', 'budi@example.com', '$2y$10$...'); -- password: 123456

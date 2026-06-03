@@ -62,6 +62,10 @@
     closeDetailButton: $("#tombolTutupDetailTanggal"),
     addFromDetailButton: $("#tombolTambahJadwalDariDetail"),
     confirmModal: $("#modalKonfirmasi"),
+    profilePhotoModal: $("#modalFotoProfil"),
+    profilePhotoContent: $("#isiFotoProfilBesar"),
+    closeProfilePhotoButton: $("#tombolTutupFotoProfil"),
+    profilePhotoSettingsButton: $("#tombolPengaturanFotoProfil"),
     confirmTitle: $("#judulModalKonfirmasi"),
     confirmMessage: $("#pesanModalKonfirmasi"),
     confirmYes: $("#tombolSetujuKonfirmasi"),
@@ -327,6 +331,35 @@
     els.confirmModal?.setAttribute("aria-hidden", "true");
   }
 
+  function openProfilePhotoModal(source) {
+    if (!els.profilePhotoModal || !els.profilePhotoContent || !source) return;
+    const image = $("img", source);
+    els.profilePhotoContent.innerHTML = "";
+
+    if (image && image.getAttribute("src")) {
+      const bigImage = document.createElement("img");
+      bigImage.src = image.getAttribute("src");
+      bigImage.alt = image.getAttribute("alt") || "Foto profil";
+      els.profilePhotoContent.appendChild(bigImage);
+    } else {
+      const initial = document.createElement("span");
+      initial.textContent = (source.textContent || profile.inisial || "U").trim().charAt(0).toUpperCase();
+      els.profilePhotoContent.appendChild(initial);
+    }
+
+    els.profilePhotoModal.classList.add("tampil");
+    els.profilePhotoModal.setAttribute("aria-hidden", "false");
+    window.setTimeout(function () {
+      els.closeProfilePhotoButton?.focus();
+    }, 80);
+  }
+
+  function closeProfilePhotoModal() {
+    if (!els.profilePhotoModal) return;
+    els.profilePhotoModal.classList.remove("tampil");
+    els.profilePhotoModal.setAttribute("aria-hidden", "true");
+  }
+
   function filterTasks() {
     if (!els.taskList) return;
 
@@ -524,14 +557,16 @@
       });
     });
 
-    els.headerAvatar?.addEventListener("click", function () {
-      setActivePage("pengaturan", true);
-    });
-    els.headerAvatar?.addEventListener("keydown", function (event) {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        setActivePage("pengaturan", true);
-      }
+    [els.headerAvatar, els.profilePreview].forEach(function (avatar) {
+      avatar?.addEventListener("click", function () {
+        openProfilePhotoModal(avatar);
+      });
+      avatar?.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openProfilePhotoModal(avatar);
+        }
+      });
     });
     $$(".profil-sidebar").forEach(function (button) {
       button.addEventListener("click", function () {
@@ -815,6 +850,11 @@
     });
 
     els.confirmNo?.addEventListener("click", closeConfirm);
+    els.closeProfilePhotoButton?.addEventListener("click", closeProfilePhotoModal);
+    els.profilePhotoSettingsButton?.addEventListener("click", function () {
+      closeProfilePhotoModal();
+      setActivePage("pengaturan", true);
+    });
     els.confirmYes?.addEventListener("click", async function () {
       const action = state.confirmAction;
       closeConfirm();
@@ -833,6 +873,7 @@
         if (modal === els.scheduleModal) closeScheduleModal();
         if (modal === els.detailModal) closeDetailModal();
         if (modal === els.confirmModal) closeConfirm();
+        if (modal === els.profilePhotoModal) closeProfilePhotoModal();
       });
     });
 
@@ -842,6 +883,7 @@
         closeScheduleModal();
         closeDetailModal();
         closeConfirm();
+        closeProfilePhotoModal();
       }
     });
   }

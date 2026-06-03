@@ -1433,6 +1433,21 @@ body.mode-gelap .kotak-tanggal {
   transition: 0.16s ease;
 }
 
+.modal-foto-profil {
+  position: relative;
+  display: grid;
+  width: min(420px, 100%);
+  justify-items: center;
+  gap: 16px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background: var(--surface);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(14px) scale(0.96);
+  transition: 0.16s ease;
+}
+
 .modal-konfirmasi {
   width: min(430px, 100%);
 }
@@ -1445,8 +1460,82 @@ body.mode-gelap .kotak-tanggal {
 
 .lapisan-modal.tampil .modal-konfirmasi,
 .lapisan-modal.tampil .modal-jadwal,
-.lapisan-modal.tampil .modal-detail-jadwal {
+.lapisan-modal.tampil .modal-detail-jadwal,
+.lapisan-modal.tampil .modal-foto-profil {
   transform: translateY(0) scale(1);
+}
+
+.modal-foto-profil h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.isi-foto-profil-besar {
+  display: grid;
+  width: min(260px, 70vw);
+  aspect-ratio: 1;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(124, 58, 237, 0.18));
+  color: var(--primary);
+  font-size: clamp(72px, 20vw, 128px);
+  font-weight: 800;
+  box-shadow: 0 18px 42px rgba(31, 41, 75, 0.2);
+}
+
+.isi-foto-profil-besar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.modal-foto-profil p {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.tombol-tutup-foto-profil,
+.tombol-pengaturan-foto-profil {
+  position: absolute;
+  top: 14px;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface-muted);
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.tombol-tutup-foto-profil {
+  right: 14px;
+}
+
+.tombol-pengaturan-foto-profil {
+  left: 14px;
+  color: var(--primary);
+  font-size: 18px;
+}
+
+.tombol-tutup-foto-profil:hover {
+  background: rgba(225, 29, 72, 0.1);
+  color: var(--red);
+}
+
+.tombol-pengaturan-foto-profil:hover {
+  background: rgba(79, 70, 229, 0.12);
+  color: var(--primary);
 }
 
 .ikon-modal {
@@ -5098,6 +5187,29 @@ body.mode-gelap #grupHapusAkun input {
   .modal-hapus-akun .aksi-modal .tombol-modal {
     width: 100%;
   }
+}
+
+.preview-foto-profil--klikable {
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+.preview-foto-profil--klikable:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22);
+  opacity: 0.94;
+}
+
+.preview-foto-profil--klikable:active {
+  transform: scale(0.98);
+}
+
+.preview-foto-profil--klikable:focus-visible,
+.tombol-tutup-foto-profil:focus-visible,
+.tombol-pengaturan-foto-profil:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
 }
 
 /* Lightweight dashboard layout */

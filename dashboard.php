@@ -411,7 +411,7 @@ function kalenderUrl($bulan, $kategori) {
           <button id="tombolModeGelapHeader" class="tombol-mode-gelap" type="button" data-toggle-mode-gelap aria-label="Toggle dark mode" aria-pressed="<?= (int)$settings['dark_mode'] ? 'true' : 'false' ?>">
             <span class="ikon-mode-gelap" aria-hidden="true"><?= (int)$settings['dark_mode'] ? '☀' : '🌙' ?></span>
           </button>
-          <div id="fotoProfilHeader" class="foto-profil-header foto-profil-header--klikable" tabindex="0" role="button" aria-label="Buka pengaturan">
+          <div id="fotoProfilHeader" class="foto-profil-header foto-profil-header--klikable" tabindex="0" role="button" aria-label="Lihat foto profil">
             <?php if ($foto_profil): ?><img src="<?= e($foto_profil) ?>" alt="Foto profil"><?php else: ?><span id="inisialProfilHeader"><?= e($inisial_user) ?></span><?php endif; ?>
           </div>
         </div>
@@ -632,7 +632,7 @@ function kalenderUrl($bulan, $kategori) {
           <section class="panel">
             <h3>Profil</h3>
             <form id="formFotoProfil" class="pengaturan-profil" enctype="multipart/form-data">
-              <div id="previewFotoProfil" class="preview-foto-profil" aria-label="Preview foto profil"><?php if ($foto_profil): ?><img src="<?= e($foto_profil) ?>" alt="Preview foto profil"><?php else: ?><span id="inisialPreviewProfil"><?= e($inisial_user) ?></span><?php endif; ?></div>
+              <div id="previewFotoProfil" class="preview-foto-profil preview-foto-profil--klikable" tabindex="0" role="button" aria-label="Lihat foto profil"><?php if ($foto_profil): ?><img src="<?= e($foto_profil) ?>" alt="Preview foto profil"><?php else: ?><span id="inisialPreviewProfil"><?= e($inisial_user) ?></span><?php endif; ?></div>
               <div class="aksi-profil"><input type="file" id="inputFotoProfil" name="foto" accept="image/png, image/jpeg, image/jpg" hidden><button id="tombolUploadFoto" class="tombol-kedua" type="button">Upload Foto</button><button id="tombolHapusFoto" class="tombol-kecil tombol-hapus" type="button">Hapus Foto</button></div>
             </form>
             <small id="pesanErrorFotoProfil" class="pesan-error-foto"></small>
@@ -700,6 +700,16 @@ function kalenderUrl($bulan, $kategori) {
     </main>
   </div>
 
+
+  <div id="modalFotoProfil" class="lapisan-modal" aria-hidden="true">
+    <div class="modal-foto-profil" role="dialog" aria-modal="true" aria-labelledby="judulModalFotoProfil">
+      <button id="tombolPengaturanFotoProfil" class="tombol-pengaturan-foto-profil" type="button" aria-label="Buka pengaturan profil">⚙</button>
+      <button id="tombolTutupFotoProfil" class="tombol-tutup-foto-profil" type="button" aria-label="Tutup foto profil">×</button>
+      <h2 id="judulModalFotoProfil">Foto Profil</h2>
+      <div id="isiFotoProfilBesar" class="isi-foto-profil-besar"></div>
+      <p id="namaFotoProfilBesar"><?= e($nama_user) ?></p>
+    </div>
+  </div>
 
   <!-- MODAL HAPUS AKUN PERMANEN (2 langkah) -->
   <div id="modalHapusAkun" class="lapisan-modal" aria-hidden="true">
