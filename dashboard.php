@@ -494,6 +494,17 @@ function kalenderUrl($bulan, $kategori) {
           </aside>
         </section>
 
+        <section class="section-dashboard section-kritik-saran">
+          <a class="panel kartu-kritik-saran" href="https://wa.me/6285267941676" target="_blank" rel="noopener" aria-label="Kirim kritik dan saran lewat WhatsApp">
+            <span class="ikon-kritik-saran" aria-hidden="true">WA</span>
+            <div>
+              <p class="teks-kecil">Kritik & Saran</p>
+              <h3>Kirim masukan untuk StudyFlow</h3>
+              <small>Terhubung langsung via WhatsApp.</small>
+            </div>
+          </a>
+        </section>
+
       </section>
 
       <section id="tugas" class="halaman <?= $active_page === 'tugas' ? 'halaman-aktif' : '' ?>">

@@ -587,6 +587,53 @@ button.kartu-statistik:hover,
   font-weight: 700;
 }
 
+.section-kritik-saran {
+  margin-top: 18px;
+}
+
+.kartu-kritik-saran {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 96px;
+  color: var(--text);
+  text-decoration: none;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.kartu-kritik-saran:hover {
+  transform: translateY(-2px);
+  border-color: rgba(34, 197, 94, 0.32);
+  box-shadow: var(--shadow-hover);
+}
+
+.ikon-kritik-saran {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  place-items: center;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0;
+  box-shadow: 0 10px 22px rgba(22, 163, 74, 0.22);
+}
+
+.kartu-kritik-saran h3 {
+  margin: 2px 0 2px;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.kartu-kritik-saran small {
+  color: var(--text-soft);
+  font-weight: 700;
+}
+
 .grid-statistik {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -5382,6 +5429,11 @@ body.mode-gelap .panel-progress-dashboard:hover {
   .grid-statistik {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
+  }
+
+  .kartu-kritik-saran {
+    align-items: flex-start;
+    padding: 18px 16px;
   }
 
   .kartu-statistik {
