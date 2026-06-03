@@ -21,6 +21,7 @@
     mobileNav: $$(".tombol-nav-mobile"),
     quickActions: $$("[data-quick-action]"),
     taskFilterLinks: $$("[data-filter-tugas]"),
+    dashboardTargetLinks: $$("[data-dashboard-target]"),
     dateText: $("#teksTanggalRealtime"),
     timeText: $("#teksJamRealtime"),
     darkButtons: $$("[data-toggle-mode-gelap]"),
@@ -451,6 +452,26 @@
     window.location.href = url.toString();
   }
 
+  function focusDashboardPanel(selector) {
+    const panel = $(selector);
+    setActivePage("dashboard", false);
+    const url = new URL(window.location.href);
+    url.searchParams.set("halaman", "dashboard");
+    window.history.replaceState({}, "", url);
+
+    if (!panel) return;
+    panel.focus({ preventScroll: true });
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function focusTodayDeadlinePanel() {
+    focusDashboardPanel("#panelDeadlineHariIni");
+  }
+
+  function focusTomorrowDeadlinePanel() {
+    focusDashboardPanel("#panelDeadlineBesok");
+  }
+
   function wireEvents() {
     els.desktopNav.concat(els.mobileNav).forEach(function (button) {
       button.addEventListener("click", function () {
@@ -470,23 +491,37 @@
         } else if (action === "lihat-kalender") {
           setActivePage("kalender", true);
         } else if (action === "fokus-hari-ini") {
-          openTaskPageWithFilter("semua", "hari_ini");
+          focusTodayDeadlinePanel();
         }
       });
     });
 
     els.taskFilterLinks.forEach(function (button) {
       button.addEventListener("click", function () {
+        if (button.dataset.deadlineFilter === "besok") {
+          focusTomorrowDeadlinePanel();
+          return;
+        }
         openTaskPageWithFilter(button.dataset.filterTugas || "semua", button.dataset.deadlineFilter || "semua");
       });
       if (button.tagName !== "BUTTON") {
         button.addEventListener("keydown", function (event) {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
+            if (button.dataset.deadlineFilter === "besok") {
+              focusTomorrowDeadlinePanel();
+              return;
+            }
             openTaskPageWithFilter(button.dataset.filterTugas || "semua", button.dataset.deadlineFilter || "semua");
           }
         });
       }
+    });
+
+    els.dashboardTargetLinks.forEach(function (button) {
+      button.addEventListener("click", function () {
+        focusDashboardPanel(button.dataset.dashboardTarget);
+      });
     });
 
     els.headerAvatar?.addEventListener("click", function () {

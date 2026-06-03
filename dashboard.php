@@ -446,8 +446,8 @@ function kalenderUrl($bulan, $kategori) {
           <div class="section-heading"><div><p class="teks-kecil">Statistik</p><h2>Snapshot produktivitas</h2></div></div>
           <div class="grid-statistik">
             <button class="kartu-statistik warna-kuning" type="button" data-filter-tugas="semua" data-deadline-filter="besok" aria-label="Buka tugas dengan deadline besok"><span class="ikon-statistik">D2</span><h3 id="angkaDeadlineBesok"><?= count($tugas_besok) ?></h3><p>Deadline Besok</p></button>
-            <button class="kartu-statistik warna-merah" type="button" data-filter-tugas="belum" data-deadline-filter="semua" aria-label="Buka tugas yang belum selesai"><span class="ikon-statistik">!</span><h3 id="angkaTugasBelumSelesai"><?= (int)$tugas_belum_selesai ?></h3><p>Tugas Belum Selesai</p></button>
-            <button class="kartu-statistik warna-hijau" type="button" data-filter-tugas="selesai" data-deadline-filter="semua" aria-label="Buka tugas yang sudah selesai"><span class="ikon-statistik">OK</span><h3 id="angkaTugasSelesai"><?= (int)$tugas_selesai ?></h3><p>Tugas Selesai</p></button>
+            <button class="kartu-statistik warna-merah" type="button" data-dashboard-target="#panelSnapshotBelumSelesai" aria-label="Lihat snapshot tugas belum selesai"><span class="ikon-statistik">!</span><h3 id="angkaTugasBelumSelesai"><?= (int)$tugas_belum_selesai ?></h3><p>Tugas Belum Selesai</p></button>
+            <button class="kartu-statistik warna-hijau" type="button" data-dashboard-target="#panelTugasSelesaiDashboard" aria-label="Lihat snapshot tugas selesai"><span class="ikon-statistik">OK</span><h3 id="angkaTugasSelesai"><?= (int)$tugas_selesai ?></h3><p>Tugas Selesai</p></button>
             <button class="kartu-statistik kartu-progress-statistik warna-biru" type="button" data-filter-tugas="semua" data-deadline-filter="semua" aria-label="Buka semua tugas"><span class="ikon-statistik">%</span><h3><?= (int)$progress_total ?>%</h3><p>Progress Tugas</p><small><?= (int)$tugas_selesai ?> dari <?= (int)$total_tugas ?> selesai</small><span class="progress-statistik-bar" aria-hidden="true"><span style="width: <?= (int)$progress_total ?>%"></span></span></button>
           </div>
         </section>
@@ -455,7 +455,7 @@ function kalenderUrl($bulan, $kategori) {
         <section class="section-dashboard">
           <div class="section-heading"><div><p class="teks-kecil">Snapshot Dashboard</p><h2>Prioritas ringkas</h2></div></div>
           <div class="grid-snapshot-dashboard">
-            <section class="panel panel-snapshot-dashboard" role="button" tabindex="0" data-filter-tugas="belum" data-deadline-filter="semua" aria-label="Buka tugas belum selesai">
+            <section id="panelSnapshotBelumSelesai" class="panel panel-snapshot-dashboard" role="button" tabindex="0" data-filter-tugas="belum" data-deadline-filter="semua" aria-label="Buka tugas belum selesai">
               <div class="kepala-panel"><div><p class="teks-kecil">Belum selesai</p><h3>Snapshot Tugas Belum Selesai</h3></div><span class="badge-panel"><?= min(count($snapshot_belum_selesai), 5) ?></span></div>
               <div class="daftar-ringkas"><?= renderDaftarRingkas(array_slice($snapshot_belum_selesai, 0, 5), 'Semua tugas sudah selesai.') ?></div>
             </section>
@@ -465,8 +465,8 @@ function kalenderUrl($bulan, $kategori) {
         <section class="dashboard-grid-utama">
           <div class="kolom-dashboard">
             <section id="panelDeadlineHariIni" class="panel panel-tugas-dashboard" tabindex="-1"><div class="kepala-panel"><div><p class="teks-kecil">Tugas</p><h3>Deadline Hari Ini</h3></div><span class="badge-panel" id="jumlahTugasHariIni"><?= count($tugas_hariini_list) ?></span></div><div id="daftarTugasHariIni" class="daftar-ringkas"><?= renderDaftarRingkas(array_slice($tugas_hariini_list, 0, 4), 'Tidak ada deadline hari ini.') ?></div></section>
-            <section class="panel panel-tugas-dashboard"><div class="kepala-panel"><div><p class="teks-kecil">Berikutnya</p><h3>Deadline Besok</h3></div><span class="badge-panel" id="jumlahTugasBesok"><?= count($tugas_besok) ?></span></div><div id="daftarTugasBesok" class="daftar-ringkas"><?= renderDaftarRingkas(array_slice($tugas_besok, 0, 4), 'Belum ada deadline besok.') ?></div></section>
-            <section class="panel panel-tugas-dashboard"><div class="kepala-panel"><div><p class="teks-kecil">Selesai</p><h3>Tugas Selesai</h3></div><span class="badge-panel" id="jumlahTugasSelesaiDashboard"><?= count($tugas_selesai_list) ?></span></div><div id="daftarTugasSelesaiDashboard" class="daftar-ringkas"><?= renderDaftarRingkas($tugas_selesai_list, 'Belum ada tugas selesai.') ?></div></section>
+            <section id="panelDeadlineBesok" class="panel panel-tugas-dashboard" tabindex="-1"><div class="kepala-panel"><div><p class="teks-kecil">Berikutnya</p><h3>Deadline Besok</h3></div><span class="badge-panel" id="jumlahTugasBesok"><?= count($tugas_besok) ?></span></div><div id="daftarTugasBesok" class="daftar-ringkas"><?= renderDaftarRingkas(array_slice($tugas_besok, 0, 4), 'Belum ada deadline besok.') ?></div></section>
+            <section id="panelTugasSelesaiDashboard" class="panel panel-tugas-dashboard" tabindex="-1"><div class="kepala-panel"><div><p class="teks-kecil">Selesai</p><h3>Tugas Selesai</h3></div><span class="badge-panel" id="jumlahTugasSelesaiDashboard"><?= count($tugas_selesai_list) ?></span></div><div id="daftarTugasSelesaiDashboard" class="daftar-ringkas"><?= renderDaftarRingkas($tugas_selesai_list, 'Belum ada tugas selesai.') ?></div></section>
           </div>
 
           <aside class="kolom-dashboard kolom-kanan">
