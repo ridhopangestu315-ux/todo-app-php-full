@@ -37,6 +37,13 @@
     taskList: $("#daftarTugas"),
     taskSearch: $("#inputPencarianTugas"),
     taskFilter: $("#filterStatusTugas"),
+    editTaskModal: $("#modalEditTugas"),
+    editTaskForm: $("#formEditTugas"),
+    editTaskIdInput: $("#inputIdEditTugas"),
+    editTaskNameInput: $("#inputNamaEditTugas"),
+    editTaskCourseInput: $("#pilihanMataKuliahEditTugas"),
+    editTaskDeadlineInput: $("#inputDeadlineEditTugas"),
+    closeEditTaskButton: $("#tombolBatalEditTugas"),
     scheduleModal: $("#modalJadwal"),
     scheduleForm: $("#formTambahJadwal"),
     scheduleDateText: $("#teksTanggalJadwalDipilih"),
@@ -250,6 +257,40 @@
     els.scheduleModal.classList.remove("tampil");
     els.scheduleModal.setAttribute("aria-hidden", "true");
     els.scheduleForm?.reset();
+  }
+
+  function setEditCourseValue(value) {
+    if (!els.editTaskCourseInput) return;
+    var course = value || "";
+    var option = Array.from(els.editTaskCourseInput.options).find(function (item) {
+      return item.value === course;
+    });
+    if (!option && course) {
+      option = new Option(course, course);
+      els.editTaskCourseInput.add(option);
+    }
+    els.editTaskCourseInput.value = course;
+  }
+
+  function openEditTaskModal(card) {
+    if (!els.editTaskModal || !card) return;
+    if (els.editTaskIdInput) els.editTaskIdInput.value = card.dataset.idTugas || "";
+    if (els.editTaskNameInput) els.editTaskNameInput.value = card.dataset.namaTugas || "";
+    setEditCourseValue(card.dataset.mataKuliah || "");
+    if (els.editTaskDeadlineInput) els.editTaskDeadlineInput.value = card.dataset.deadline || "";
+
+    els.editTaskModal.classList.add("tampil");
+    els.editTaskModal.setAttribute("aria-hidden", "false");
+    window.setTimeout(function () {
+      if (els.editTaskNameInput) els.editTaskNameInput.focus();
+    }, 80);
+  }
+
+  function closeEditTaskModal() {
+    if (!els.editTaskModal) return;
+    els.editTaskModal.classList.remove("tampil");
+    els.editTaskModal.setAttribute("aria-hidden", "true");
+    els.editTaskForm?.reset();
   }
 
   function openDetailModal(date, title, items) {
@@ -521,13 +562,47 @@
     });
 
     els.taskList?.addEventListener("click", function (event) {
-      const button = event.target.closest("[data-aksi='hapus-tugas']");
+      const button = event.target.closest("[data-aksi]");
       if (!button) return;
       const card = button.closest(".item-tugas");
+      if (!card) return;
+      if (button.dataset.aksi === "edit-tugas") {
+        openEditTaskModal(card);
+        return;
+      }
+      if (button.dataset.aksi !== "hapus-tugas") return;
       openConfirm("Hapus tugas?", "Tugas ini akan dihapus dari StudyFlow.", async function () {
         await apiPost("hapus_tugas", { id: card.dataset.idTugas });
         reloadWithPage("tugas");
       });
+    });
+
+    els.editTaskForm?.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      const submitButton = event.submitter || $(".tombol-modal-utama", els.editTaskForm);
+      var id = els.editTaskIdInput ? els.editTaskIdInput.value : "";
+      var nama = els.editTaskNameInput ? els.editTaskNameInput.value.trim() : "";
+      var mataKuliah = els.editTaskCourseInput ? els.editTaskCourseInput.value.trim() : "";
+      var deadline = els.editTaskDeadlineInput ? els.editTaskDeadlineInput.value : "";
+
+      if (!id || !nama || !mataKuliah || !deadline) {
+        showToast("Nama tugas, mata kuliah, dan deadline wajib diisi.", "error");
+        return;
+      }
+
+      try {
+        setButtonLoading(submitButton, true, "Menyimpan...");
+        await apiPost("edit_tugas", {
+          id: id,
+          nama_tugas: nama,
+          mata_kuliah: mataKuliah,
+          deadline: deadline
+        });
+        reloadWithPage("tugas");
+      } catch (error) {
+        setButtonLoading(submitButton, false);
+        showToast(error.message, "error");
+      }
     });
 
     els.taskSearch?.addEventListener("input", filterTasks);
@@ -539,6 +614,7 @@
     els.openScheduleButton?.addEventListener("click", function () {
       openScheduleModal();
     });
+    els.closeEditTaskButton?.addEventListener("click", closeEditTaskModal);
     els.closeScheduleButton?.addEventListener("click", closeScheduleModal);
     els.mobileAddA?.addEventListener("click", function () {
       setActivePage("tugas", true);
@@ -718,6 +794,7 @@
     $$(".lapisan-modal").forEach(function (modal) {
       modal.addEventListener("click", function (event) {
         if (event.target !== modal) return;
+        if (modal === els.editTaskModal) closeEditTaskModal();
         if (modal === els.scheduleModal) closeScheduleModal();
         if (modal === els.detailModal) closeDetailModal();
         if (modal === els.confirmModal) closeConfirm();
@@ -726,6 +803,7 @@
 
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape") {
+        closeEditTaskModal();
         closeScheduleModal();
         closeDetailModal();
         closeConfirm();

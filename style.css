@@ -957,6 +957,11 @@ input::placeholder {
   font-size: 12px;
 }
 
+.tombol-edit {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary);
+}
+
 .tombol-hapus,
 .tombol-hapus-jadwal,
 .tombol-hapus-mata-kuliah {
@@ -2181,6 +2186,13 @@ select,
   margin-left: auto;
 }
 
+.grup-aksi-tugas {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
 .item-tugas .label-status {
   min-height: 28px;
   padding: 5px 11px;
@@ -2201,6 +2213,7 @@ select,
   color: #b45309;
 }
 
+.item-tugas .tombol-edit,
 .item-tugas .tombol-hapus {
   min-height: 34px;
   padding: 0 12px;

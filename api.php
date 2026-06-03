@@ -127,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             SELECT id, nama_tugas, mata_kuliah, deadline, sudah_selesai, `$kolom_waktu` AS dibuat_pada
             FROM tasks 
             WHERE user_id = ? 
-            ORDER BY deadline ASC, `$kolom_waktu` DESC
+            ORDER BY sudah_selesai ASC, (deadline IS NULL), deadline ASC, `$kolom_waktu` DESC
         ");
         mysqli_stmt_bind_param($stmt, "i", $user_id);
         mysqli_stmt_execute($stmt);

@@ -172,7 +172,7 @@ function renderTaskCard($task) {
     $checked = $selesai ? ' checked' : '';
     $search = strtolower(($task['nama_tugas'] ?? '') . ' ' . ($task['mata_kuliah'] ?? ''));
     return '
-      <article class="item-tugas' . $kelas . '" data-id-tugas="' . (int)$task['id'] . '" data-status="' . e($status) . '" data-deadline="' . e($task['deadline']) . '" data-search="' . e($search) . '">
+      <article class="item-tugas' . $kelas . '" data-id-tugas="' . (int)$task['id'] . '" data-nama-tugas="' . e($task['nama_tugas']) . '" data-mata-kuliah="' . e($task['mata_kuliah']) . '" data-status="' . e($status) . '" data-deadline="' . e($task['deadline']) . '" data-search="' . e($search) . '">
         <div class="bagian-utama-tugas">
           <input class="checkbox-tugas" type="checkbox"' . $checked . ' aria-label="Tandai selesai">
           <div class="konten-tugas">
@@ -186,7 +186,10 @@ function renderTaskCard($task) {
         </div>
         <div class="aksi-tugas">
           <span class="label-status ' . $label . '">' . e(teksDeadline($task['deadline'], $selesai)) . '</span>
-          <button class="tombol-kecil tombol-hapus" type="button" data-aksi="hapus-tugas">Hapus</button>
+          <div class="grup-aksi-tugas">
+            <button class="tombol-kecil tombol-edit" type="button" data-aksi="edit-tugas">Edit</button>
+            <button class="tombol-kecil tombol-hapus" type="button" data-aksi="hapus-tugas">Hapus</button>
+          </div>
         </div>
       </article>';
 }
@@ -240,7 +243,7 @@ $inisial_user = strtoupper(substr(trim($nama_user), 0, 1) ?: 'M');
 
 $kolomWaktuTugas = punyaKolom($conn, 'tasks', 'dibuat_pada') ? 'dibuat_pada' : 'created_at';
 $kolomWaktuJadwal = punyaKolom($conn, 'schedules', 'dibuat_pada') ? 'dibuat_pada' : 'created_at';
-$tasks = ambilSemua($conn, "SELECT id, nama_tugas, mata_kuliah, deadline, sudah_selesai, `$kolomWaktuTugas` AS dibuat_pada FROM tasks WHERE user_id = ? ORDER BY (deadline IS NULL), deadline ASC, `$kolomWaktuTugas` DESC", 'i', [$user_id]);
+$tasks = ambilSemua($conn, "SELECT id, nama_tugas, mata_kuliah, deadline, sudah_selesai, `$kolomWaktuTugas` AS dibuat_pada FROM tasks WHERE user_id = ? ORDER BY sudah_selesai ASC, (deadline IS NULL), deadline ASC, `$kolomWaktuTugas` DESC", 'i', [$user_id]);
 $schedules = ambilSemua($conn, "SELECT id, nama_jadwal, tanggal, jam, kategori, `$kolomWaktuJadwal` AS dibuat_pada FROM schedules WHERE user_id = ? ORDER BY tanggal ASC, jam ASC", 'i', [$user_id]);
 
 $today = tanggalKode();
@@ -250,18 +253,12 @@ $total_tugas = count($tasks);
 $tugas_selesai = 0;
 $tugas_belum_selesai = 0;
 $tugas_hariini = 0;
-$deadline_dekat = 0;
 $tugas_hariini_semua = 0;
 $tugas_hariini_selesai = 0;
 $tugas_besok = [];
 $tugas_hariini_list = [];
 $tugas_selesai_list = [];
-$tugas_terbaru = $tasks;
-usort($tugas_terbaru, function ($a, $b) {
-    return strcmp($b['dibuat_pada'], $a['dibuat_pada']);
-});
 $snapshot_belum_selesai = [];
-$snapshot_deadline_terdekat = [];
 
 foreach ($tasks as $task) {
     $selesai = (int)$task['sudah_selesai'] === 1;
@@ -281,24 +278,11 @@ foreach ($tasks as $task) {
     if ($selesai && count($tugas_selesai_list) < 4) {
         $tugas_selesai_list[] = $task;
     }
-    if (!$selesai && $task['deadline']) {
-        $diff = (int)(new DateTime('today'))->diff(new DateTime($task['deadline']))->format('%r%a');
-        if ($diff >= 0 && $diff <= 2) $deadline_dekat++;
-    }
 }
 
-$snapshot_belum_selesai = array_values(array_filter($tugas_terbaru, function ($task) {
+$snapshot_belum_selesai = array_values(array_filter($tasks, function ($task) {
     return (int)$task['sudah_selesai'] !== 1;
 }));
-$snapshot_deadline_terdekat = array_values(array_filter($tasks, function ($task) {
-    if ((int)$task['sudah_selesai'] === 1 || !$task['deadline']) return false;
-    $diff = (int)(new DateTime('today'))->diff(new DateTime($task['deadline']))->format('%r%a');
-    return $diff >= 0;
-}));
-usort($snapshot_deadline_terdekat, function ($a, $b) {
-    $byDeadline = strcmp((string)$a['deadline'], (string)$b['deadline']);
-    return $byDeadline !== 0 ? $byDeadline : strcmp((string)$b['dibuat_pada'], (string)$a['dibuat_pada']);
-});
 
 $progress_hari_ini = $tugas_hariini_semua > 0 ? (int)round(($tugas_hariini_selesai / $tugas_hariini_semua) * 100) : 0;
 $progress_total = $total_tugas > 0 ? (int)round(($tugas_selesai / $total_tugas) * 100) : 0;
@@ -475,10 +459,6 @@ function kalenderUrl($bulan, $kategori) {
               <div class="kepala-panel"><div><p class="teks-kecil">Belum selesai</p><h3>Snapshot Tugas Belum Selesai</h3></div><span class="badge-panel"><?= min(count($snapshot_belum_selesai), 5) ?></span></div>
               <div class="daftar-ringkas"><?= renderDaftarRingkas(array_slice($snapshot_belum_selesai, 0, 5), 'Semua tugas sudah selesai.') ?></div>
             </section>
-            <section class="panel panel-snapshot-dashboard" role="button" tabindex="0" data-filter-tugas="belum" data-deadline-filter="dekat" aria-label="Buka deadline terdekat">
-              <div class="kepala-panel"><div><p class="teks-kecil">Deadline</p><h3>Snapshot Deadline Terdekat</h3></div><span class="badge-panel"><?= min(count($snapshot_deadline_terdekat), 5) ?></span></div>
-              <div class="daftar-ringkas"><?= renderDaftarRingkas(array_slice($snapshot_deadline_terdekat, 0, 5), 'Belum ada deadline mendatang.') ?></div>
-            </section>
           </div>
         </section>
 
@@ -487,7 +467,6 @@ function kalenderUrl($bulan, $kategori) {
             <section id="panelDeadlineHariIni" class="panel panel-tugas-dashboard" tabindex="-1"><div class="kepala-panel"><div><p class="teks-kecil">Tugas</p><h3>Deadline Hari Ini</h3></div><span class="badge-panel" id="jumlahTugasHariIni"><?= count($tugas_hariini_list) ?></span></div><div id="daftarTugasHariIni" class="daftar-ringkas"><?= renderDaftarRingkas(array_slice($tugas_hariini_list, 0, 4), 'Tidak ada deadline hari ini.') ?></div></section>
             <section class="panel panel-tugas-dashboard"><div class="kepala-panel"><div><p class="teks-kecil">Berikutnya</p><h3>Deadline Besok</h3></div><span class="badge-panel" id="jumlahTugasBesok"><?= count($tugas_besok) ?></span></div><div id="daftarTugasBesok" class="daftar-ringkas"><?= renderDaftarRingkas(array_slice($tugas_besok, 0, 4), 'Belum ada deadline besok.') ?></div></section>
             <section class="panel panel-tugas-dashboard"><div class="kepala-panel"><div><p class="teks-kecil">Selesai</p><h3>Tugas Selesai</h3></div><span class="badge-panel" id="jumlahTugasSelesaiDashboard"><?= count($tugas_selesai_list) ?></span></div><div id="daftarTugasSelesaiDashboard" class="daftar-ringkas"><?= renderDaftarRingkas($tugas_selesai_list, 'Belum ada tugas selesai.') ?></div></section>
-            <section class="panel panel-tugas-dashboard"><div class="kepala-panel"><div><p class="teks-kecil">Terbaru</p><h3>Tugas Terbaru</h3></div></div><div id="daftarTugasTerbaru" class="daftar-ringkas"><?= renderDaftarRingkas(array_slice($tugas_terbaru, 0, 4), 'Belum ada tugas. Tambahkan tugas pertamamu.') ?></div></section>
           </div>
 
           <aside class="kolom-dashboard kolom-kanan">
@@ -766,6 +745,7 @@ function kalenderUrl($bulan, $kategori) {
     </div>
   </div>
   <div id="modalKonfirmasi" class="lapisan-modal" aria-hidden="true"><div class="modal-konfirmasi" role="dialog" aria-modal="true" aria-labelledby="judulModalKonfirmasi" aria-describedby="pesanModalKonfirmasi"><div class="ikon-modal" aria-hidden="true">!</div><div class="isi-modal"><p class="teks-kecil">Konfirmasi</p><h2 id="judulModalKonfirmasi">Konfirmasi aksi</h2><p id="pesanModalKonfirmasi">Lanjutkan aksi ini?</p></div><div class="aksi-modal"><button id="tombolBatalKonfirmasi" class="tombol-modal tombol-modal-kedua" type="button">Batal</button><button id="tombolSetujuKonfirmasi" class="tombol-modal tombol-modal-bahaya" type="button">Lanjutkan</button></div></div></div>
+  <div id="modalEditTugas" class="lapisan-modal" aria-hidden="true"><form id="formEditTugas" class="modal-jadwal" role="dialog" aria-modal="true" aria-labelledby="judulModalEditTugas" novalidate><div class="isi-modal"><p class="teks-kecil">Edit Tugas</p><h2 id="judulModalEditTugas">Ubah tugas</h2><p>Perbarui judul, mata kuliah, atau tanggal deadline tugas.</p></div><input type="hidden" id="inputIdEditTugas"><div class="grup-form"><label for="inputNamaEditTugas">Nama tugas</label><input type="text" id="inputNamaEditTugas" placeholder="Contoh: Laporan praktikum" autocomplete="off"><small id="pesanErrorNamaEditTugas" class="pesan-error"></small></div><div class="grup-form"><label for="pilihanMataKuliahEditTugas">Mata kuliah</label><select id="pilihanMataKuliahEditTugas"><option value="">Pilih mata kuliah</option><?php foreach ($courses as $course): ?><option value="<?= e($course['nama_mata_kuliah']) ?>"><?= e($course['nama_mata_kuliah']) ?></option><?php endforeach; ?></select><small id="pesanErrorMataKuliahEditTugas" class="pesan-error"></small></div><div class="grup-form"><label for="inputDeadlineEditTugas">Deadline</label><input type="date" id="inputDeadlineEditTugas"><small id="pesanErrorDeadlineEditTugas" class="pesan-error"></small></div><div class="aksi-modal"><button id="tombolBatalEditTugas" class="tombol-modal tombol-modal-kedua" type="button">Batal</button><button class="tombol-modal tombol-modal-utama" type="submit">Simpan</button></div></form></div>
   <div id="modalJadwal" class="lapisan-modal" aria-hidden="true"><form id="formTambahJadwal" class="modal-jadwal" role="dialog" aria-modal="true" aria-labelledby="judulModalJadwal" novalidate><div class="isi-modal"><p class="teks-kecil">Jadwal Baru</p><h2 id="judulModalJadwal">Tambah Jadwal</h2><p id="teksTanggalJadwalDipilih">Pilih tanggal pada kalender.</p></div><div class="grup-form"><label for="inputNamaJadwal">Nama kegiatan</label><input type="text" id="inputNamaJadwal" placeholder="Contoh: Diskusi kelompok" autocomplete="off"><small id="pesanErrorNamaJadwal" class="pesan-error"></small></div><div class="baris-form"><div class="grup-form"><label for="inputTanggalJadwal">Tanggal</label><input type="date" id="inputTanggalJadwal"><small id="pesanErrorTanggalJadwal" class="pesan-error"></small></div><div class="grup-form"><label for="inputJamJadwal">Jam</label><input type="time" id="inputJamJadwal"><small id="pesanErrorJamJadwal" class="pesan-error"></small></div></div><div class="grup-form"><label for="pilihanKategoriJadwal">Kategori</label><select id="pilihanKategoriJadwal"><option value="kuliah">Kuliah</option><option value="organisasi">Organisasi</option><option value="ujian">Ujian</option><option value="pribadi">Pribadi</option></select></div><div class="aksi-modal"><button id="tombolBatalJadwal" class="tombol-modal tombol-modal-kedua" type="button">Batal</button><button class="tombol-modal tombol-modal-utama" type="submit">Simpan Jadwal</button></div></form></div>
   <div id="modalDetailTanggal" class="lapisan-modal" aria-hidden="true"><div class="modal-detail-jadwal" role="dialog" aria-modal="true" aria-labelledby="judulModalDetail"><div class="kepala-modal-detail"><div><p class="teks-kecil">Jadwal di Tanggal</p><h2 id="judulModalDetail">Detail tanggal</h2></div><button id="tombolTutupDetailTanggal" class="tombol-tutup-modal" type="button">×</button></div><div id="daftarJadwalDetailTanggal" class="daftar-jadwal-detail"></div><button id="tombolTambahJadwalDariDetail" class="tombol-tambah-di-modal" type="button">Tambah jadwal di tanggal ini</button></div></div>
 
