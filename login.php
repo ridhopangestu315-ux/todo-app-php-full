@@ -9,6 +9,9 @@ if (isset($_SESSION['user_id'])) {
 
 $error = '';
 $success = isset($_GET['daftar']) && $_GET['daftar'] === 'berhasil';
+if ($success) {
+    unset($_SESSION['register_success_ready']);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');

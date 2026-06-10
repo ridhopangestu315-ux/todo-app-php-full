@@ -3977,6 +3977,50 @@ button.kartu-statistik:focus-visible,
   outline-offset: 2px;
 }
 
+/* Final checkbox override: cegah centang native + custom tampil dobel di browser hosting/mobile. */
+.checkbox-tugas {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  display: inline-block;
+  flex: 0 0 28px;
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  min-height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 1.7px solid rgba(79, 70, 229, 0.38);
+  border-radius: 11px;
+  background-color: var(--surface-strong);
+  background-image: none;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 19px 19px;
+  box-shadow: 0 2px 5px rgba(31, 41, 75, 0.06);
+  color: transparent;
+  line-height: 1;
+  transform: none;
+  vertical-align: middle;
+}
+
+.checkbox-tugas::after {
+  content: none;
+}
+
+.checkbox-tugas:checked {
+  border-color: transparent;
+  background-color: #4f46e5;
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.25 10.35L8.05 14.05L15.95 5.65' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),
+    linear-gradient(135deg, #2563eb, #7c3aed);
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
+  background-size: 19px 19px, 100% 100%;
+  box-shadow: 0 6px 14px rgba(79, 70, 229, 0.22);
+  transform: none;
+}
+
 .item-agenda,
 .item-kalender,
 .item-tugas,

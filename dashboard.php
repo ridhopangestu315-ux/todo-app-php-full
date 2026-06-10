@@ -515,7 +515,7 @@ function kalenderUrl($bulan, $kategori) {
           <div class="grup-form"><label for="inputDeadlineTugas">Deadline</label><input type="date" id="inputDeadlineTugas" min="<?= e($today) ?>"><small id="pesanErrorDeadlineTugas" class="pesan-error"></small></div>
           <button class="tombol-utama" type="submit">Tambah Tugas</button>
         </form>
-        <div class="alat-filter-tugas"><div class="search-wrapper"><span>⌕</span><input type="search" id="inputPencarianTugas" placeholder="Cari tugas atau mata kuliah"></div><select id="filterStatusTugas"><option value="semua">Semua tugas</option><option value="belum">Belum selesai</option><option value="selesai">Selesai</option></select></div>
+        <div class="alat-filter-tugas"><div class="search-wrapper"><span>⌕</span><input type="search" id="inputPencarianTugas" name="pencarian_tugas" placeholder="Cari tugas atau mata kuliah" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div><select id="filterStatusTugas"><option value="semua">Semua tugas</option><option value="belum">Belum selesai</option><option value="selesai">Selesai</option></select></div>
         <div id="daftarTugas" class="daftar-tugas">
           <?php if ($tasks): foreach ($tasks as $task): echo renderTaskCard($task); endforeach; else: echo kotakKosong('Belum ada tugas. Tambahkan tugas pertamamu.'); endif; ?>
         </div>

@@ -1,4 +1,5 @@
-<?php 
+<?php
+ob_start();
 error_reporting(E_ERROR);
 @ini_set('display_errors', '0');
 require 'koneksi.php'; 
@@ -7,15 +8,25 @@ if (isset($_SESSION['user_id'])) {
     exit;
 }
 $error = '';
-$success = false;
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && empty($_SESSION['register_token'])) {
+    $_SESSION['register_token'] = bin2hex(random_bytes(32));
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nama = trim($_POST['nama'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
     $password_confirm = trim($_POST['password_confirm'] ?? '');
+    $register_token = $_POST['register_token'] ?? '';
 
-    if (!$nama || !$email || !$password) {
+    if (!$register_token || empty($_SESSION['register_token']) || !hash_equals($_SESSION['register_token'], $register_token)) {
+        if (!empty($_SESSION['register_success_ready'])) {
+            unset($_SESSION['register_success_ready']);
+            header("Location: login.php?daftar=berhasil");
+            exit;
+        }
+        $error = "Sesi pendaftaran sudah kedaluwarsa. Silakan coba lagi.";
+    } elseif (!$nama || !$email || !$password || !$password_confirm) {
         $error = "Semua field wajib diisi!";
     } elseif (strlen($password) < 6) {
         $error = "Password minimal 6 karakter!";
@@ -56,6 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         mysqli_stmt_close($stmt2);
                     }
                     
+                    unset($_SESSION['register_token']);
+                    $_SESSION['register_success_ready'] = true;
                     header("Location: login.php?daftar=berhasil");
                     exit;
                 } else {
@@ -70,6 +83,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+}
+if (empty($_SESSION['register_token'])) {
+    $_SESSION['register_token'] = bin2hex(random_bytes(32));
 }
 ?>
 <!DOCTYPE html>
@@ -99,7 +115,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </p>
     <?php endif; ?>
     
-    <form method="POST" action="register.php" autocomplete="on" novalidate>
+    <form id="formRegister" method="POST" action="register.php" autocomplete="on" novalidate>
+      <input type="hidden" name="register_token" value="<?= htmlspecialchars($_SESSION['register_token']) ?>">
       <div class="grup-form">
         <label for="namaRegister">Nama Lengkap</label>
         <input id="namaRegister" type="text" name="nama" required autocomplete="name" value="<?= htmlspecialchars($_POST['nama'] ?? '') ?>">
@@ -126,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           </button>
         </div>
       </div>
-      <button type="submit" class="tombol-utama auth-submit">Daftar</button>
+      <button id="tombolSubmitRegister" type="submit" class="tombol-utama auth-submit">Daftar</button>
     </form>
     <p class="auth-switch">Sudah punya akun? <a href="login.php">Login</a></p>
   </div>
@@ -142,6 +159,19 @@ document.querySelectorAll('[data-toggle-password]').forEach(function (button) {
     button.querySelector('span').innerHTML = show ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-6.5 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>' : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
   });
 });
+var formRegister = document.getElementById('formRegister');
+var tombolSubmitRegister = document.getElementById('tombolSubmitRegister');
+if (formRegister && tombolSubmitRegister) {
+  formRegister.addEventListener('submit', function (event) {
+    if (formRegister.dataset.submitted === '1') {
+      event.preventDefault();
+      return;
+    }
+    formRegister.dataset.submitted = '1';
+    tombolSubmitRegister.disabled = true;
+    tombolSubmitRegister.textContent = 'Memproses...';
+  });
+}
 </script>
 </body>
 </html>
