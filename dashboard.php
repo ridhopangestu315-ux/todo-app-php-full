@@ -582,7 +582,7 @@ function kalenderUrl($bulan, $kategori) {
         </section>
 
         <section class="section-dashboard section-kritik-saran">
-          <a class="panel kartu-kritik-saran" href="https://wa.me/6285267941676" target="_blank" rel="noopener" aria-label="Kirim kritik dan saran lewat WhatsApp">
+          <a class="panel kartu-kritik-saran" href="https://wa.me/62895329191883" target="_blank" rel="noopener" aria-label="Kirim kritik dan saran lewat WhatsApp">
             <span class="ikon-kritik-saran" aria-hidden="true">WA</span>
             <div>
               <p class="teks-kecil">Kritik & Saran</p>
