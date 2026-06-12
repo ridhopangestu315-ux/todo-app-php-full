@@ -364,7 +364,7 @@ function kalenderUrl($bulan, $kategori) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>StudyFlow - Dashboard Mahasiswa</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260612-water-animation-v4">
+  <link rel="stylesheet" href="style.css?v=20260612-water-card-v6">
   <link rel="icon" type="image/png" href="icon1.PNG">
 </head>
 <body class="<?= (int)$settings['dark_mode'] ? 'mode-gelap' : '' ?>" data-halaman-aktif="<?= e($active_page) ?>">
@@ -448,7 +448,49 @@ function kalenderUrl($bulan, $kategori) {
             <button class="kartu-statistik warna-kuning" type="button" data-filter-tugas="semua" data-deadline-filter="besok" aria-label="Buka tugas dengan deadline besok"><span class="ikon-statistik">D2</span><h3 id="angkaDeadlineBesok"><?= count($tugas_besok) ?></h3><p>Deadline Besok</p></button>
             <button class="kartu-statistik warna-merah" type="button" data-dashboard-target="#panelSnapshotBelumSelesai" aria-label="Lihat snapshot tugas belum selesai"><span class="ikon-statistik">!</span><h3 id="angkaTugasBelumSelesai"><?= (int)$tugas_belum_selesai ?></h3><p>Tugas Belum Selesai</p></button>
             <button class="kartu-statistik warna-hijau" type="button" data-dashboard-target="#panelTugasSelesaiDashboard" aria-label="Lihat snapshot tugas selesai"><span class="ikon-statistik">OK</span><h3 id="angkaTugasSelesai"><?= (int)$tugas_selesai ?></h3><p>Tugas Selesai</p></button>
-            <button class="kartu-statistik kartu-progress-statistik warna-biru" type="button" data-filter-tugas="semua" data-deadline-filter="semua" aria-label="Buka semua tugas"><span class="ikon-statistik">%</span><h3><?= (int)$progress_total ?>%</h3><p>Progress Tugas</p><small><?= (int)$tugas_selesai ?> dari <?= (int)$total_tugas ?> selesai</small><span class="progress-statistik-bar" aria-hidden="true"><span style="width: <?= (int)$progress_total ?>%"></span></span></button>
+            <button class="kartu-statistik kartu-progress-statistik warna-biru" type="button" data-filter-tugas="semua" data-deadline-filter="semua" aria-label="Buka semua tugas" style="--progress-total: <?= (int)$progress_total ?>%">
+              <div class="kps-inner">
+                <div class="kps-header">
+                  <span class="kps-title">Progress Tugas</span>
+                  <div class="kps-badge-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                      <circle cx="8" cy="16" r="3.5" opacity="0.8"/>
+                      <circle cx="15" cy="11" r="2.5" opacity="0.6"/>
+                      <circle cx="11" cy="7" r="1.5" opacity="0.9"/>
+                    </svg>
+                  </div>
+                </div>
+                
+                <div class="kps-content">
+                  <div class="kps-percent"><?= (int)$progress_total ?>%</div>
+                  <div class="kps-label">PROGRESS TUGAS</div>
+                  <div class="kps-stats"><?= (int)$tugas_selesai ?> dari <?= (int)$total_tugas ?> selesai</div>
+                </div>
+                
+                <div class="kps-progress-bar" aria-hidden="true">
+                  <span class="kps-progress-bar-fill" style="width: <?= (int)$progress_total ?>%"></span>
+                </div>
+              </div>
+
+              <div class="progress-water-container" aria-hidden="true">
+                <svg class="water-wave water-wave-back" viewBox="0 0 240 28" preserveAspectRatio="none">
+                  <path d="M0 15 C 30 6, 30 6, 60 15 S 90 24, 120 15 C 150 6, 150 6, 180 15 S 210 24, 240 15 V 28 H 0 Z" />
+                </svg>
+                <svg class="water-wave water-wave-front" viewBox="0 0 240 28" preserveAspectRatio="none">
+                  <path d="M0 15 C 30 24, 30 24, 60 15 S 90 6, 120 15 C 150 24, 150 24, 180 15 S 210 6, 240 15 V 28 H 0 Z" />
+                </svg>
+                
+                <div class="water-bubbles">
+                  <span class="bubble" style="--left: 15%; --size: 8px; --delay: 0s; --speed: 3.2s;"></span>
+                  <span class="bubble" style="--left: 35%; --size: 11px; --delay: 1.1s; --speed: 4.5s;"></span>
+                  <span class="bubble" style="--left: 55%; --size: 6px; --delay: 0.5s; --speed: 3s;"></span>
+                  <span class="bubble" style="--left: 72%; --size: 10px; --delay: 2s; --speed: 4s;"></span>
+                  <span class="bubble" style="--left: 88%; --size: 7px; --delay: 1.4s; --speed: 3.6s;"></span>
+                  <span class="bubble" style="--left: 25%; --size: 13px; --delay: 2.5s; --speed: 5s;"></span>
+                  <span class="bubble" style="--left: 65%; --size: 9px; --delay: 3s; --speed: 4.2s;"></span>
+                </div>
+              </div>
+            </button>
           </div>
         </section>
 
