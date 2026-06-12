@@ -742,37 +742,43 @@ function kalenderUrl($bulan, $kategori) {
           <section class="panel"><h3>Notifikasi</h3><label class="baris-switch" for="toggleNotifikasiDeadline"><span>Peringatan deadline dekat</span><input type="checkbox" id="toggleNotifikasiDeadline" <?= (int)$settings['notifikasi'] ? 'checked' : '' ?>></label></section>
           <section class="panel panel-mata-kuliah" id="panelMataKuliah"><h3>Mata Kuliah</h3><p class="teks-kecil-panel">Tambahkan mata kuliah kamu. Daftar ini otomatis muncul di form tambah tugas.</p><div class="form-tambah-mata-kuliah"><div class="grup-form"><label for="inputNamaMataKuliah">Nama mata kuliah</label><input type="text" id="inputNamaMataKuliah" placeholder="Contoh: Pemrograman Mobile" autocomplete="off" maxlength="80"><small id="pesanErrorMataKuliahBaru" class="pesan-error"></small></div><button id="tombolTambahMataKuliah" class="tombol-utama" type="button">Tambah</button></div><div id="daftarMataKuliahPengaturan" class="daftar-mata-kuliah-pengaturan"><?php if ($courses): foreach ($courses as $course): ?><div class="item-mata-kuliah" data-course-id="<?= (int)$course['id'] ?>"><span class="nama-mata-kuliah-item"><?= e($course['nama_mata_kuliah']) ?></span><button class="tombol-hapus-mata-kuliah" type="button" data-course-remove="<?= (int)$course['id'] ?>">Hapus</button></div><?php endforeach; else: ?><div class="kotak-kosong-mata-kuliah"><span class="ikon-kosong-mata-kuliah">+</span>Belum ada mata kuliah. Tambahkan mata kuliah terlebih dahulu.</div><?php endif; ?></div></section>
           <section class="panel panel-keamanan">
-            <h3>Ganti Password</h3>
-            <p class="teks-kecil-panel">Gunakan password yang kuat dan belum pernah dipakai di tempat lain.</p>
-            <div class="grup-form">
-              <label for="inputPasswordLama">Password lama</label>
-              <div class="password-field"><input type="password" id="inputPasswordLama" placeholder="Password saat ini" autocomplete="current-password"><button class="password-toggle" type="button" data-toggle-password aria-label="Tampilkan password" aria-pressed="false"><span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span></button></div>
-            </div>
-            <div class="grup-form">
-              <label for="inputPasswordBaru">Password baru</label>
-              <div class="password-field"><input type="password" id="inputPasswordBaru" placeholder="Minimal 6 karakter" autocomplete="new-password"><button class="password-toggle" type="button" data-toggle-password aria-label="Tampilkan password" aria-pressed="false"><span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span></button></div>
-            </div>
-            <div class="grup-form">
-              <label for="inputKonfirmasiPassword">Konfirmasi password baru</label>
-              <div class="password-field"><input type="password" id="inputKonfirmasiPassword" placeholder="Ulangi password baru" autocomplete="new-password"><button class="password-toggle" type="button" data-toggle-password aria-label="Tampilkan password" aria-pressed="false"><span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span></button></div>
-            </div>
-            <small id="pesanGantiPassword" class="pesan-error"></small>
-            <button id="tombolGantiPassword" class="tombol-utama" type="button">Simpan Password</button>
+            <form id="formGantiPassword" autocomplete="off" onsubmit="return false;">
+              <!-- Hidden username input to isolate credentials manager autocomplete scope -->
+              <input type="text" name="username" style="display:none;" autocomplete="username" value="<?= e($user_data['email'] ?? '') ?>">
+              <h3>Ganti Password</h3>
+              <p class="teks-kecil-panel">Gunakan password yang kuat dan belum pernah dipakai di tempat lain.</p>
+              <div class="grup-form">
+                <label for="inputPasswordLama">Password lama</label>
+                <div class="password-field"><input type="password" id="inputPasswordLama" placeholder="Password saat ini" autocomplete="current-password"><button class="password-toggle" type="button" data-toggle-password aria-label="Tampilkan password" aria-pressed="false"><span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span></button></div>
+              </div>
+              <div class="grup-form">
+                <label for="inputPasswordBaru">Password baru</label>
+                <div class="password-field"><input type="password" id="inputPasswordBaru" placeholder="Minimal 6 karakter" autocomplete="new-password"><button class="password-toggle" type="button" data-toggle-password aria-label="Tampilkan password" aria-pressed="false"><span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span></button></div>
+              </div>
+              <div class="grup-form">
+                <label for="inputKonfirmasiPassword">Konfirmasi password baru</label>
+                <div class="password-field"><input type="password" id="inputKonfirmasiPassword" placeholder="Ulangi password baru" autocomplete="new-password"><button class="password-toggle" type="button" data-toggle-password aria-label="Tampilkan password" aria-pressed="false"><span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span></button></div>
+              </div>
+              <small id="pesanGantiPassword" class="pesan-error"></small>
+              <button id="tombolGantiPassword" class="tombol-utama" type="button">Simpan Password</button>
+            </form>
           </section>
 
           <section class="panel panel-keamanan">
-            <h3>Ganti Email</h3>
-            <p class="teks-kecil-panel">Email kamu saat ini: <strong id="emailSaatIni"><?= e($user_data['email'] ?? '') ?></strong></p>
-            <div class="grup-form">
-              <label for="inputEmailBaru">Email baru</label>
-              <input type="email" id="inputEmailBaru" placeholder="email@baru.com" autocomplete="email">
-            </div>
-            <div class="grup-form">
-              <label for="inputPasswordKonfirmasiEmail">Konfirmasi dengan password</label>
-              <div class="password-field"><input type="password" id="inputPasswordKonfirmasiEmail" placeholder="Password kamu" autocomplete="current-password"><button class="password-toggle" type="button" data-toggle-password aria-label="Tampilkan password" aria-pressed="false"><span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span></button></div>
-            </div>
-            <small id="pesanGantiEmail" class="pesan-error"></small>
-            <button id="tombolGantiEmail" class="tombol-utama" type="button">Simpan Email</button>
+            <form id="formGantiEmail" autocomplete="off" onsubmit="return false;">
+              <h3>Ganti Email</h3>
+              <p class="teks-kecil-panel">Email kamu saat ini: <strong id="emailSaatIni"><?= e($user_data['email'] ?? '') ?></strong></p>
+              <div class="grup-form">
+                <label for="inputEmailBaru">Email baru</label>
+                <input type="email" id="inputEmailBaru" placeholder="email@baru.com" autocomplete="email">
+              </div>
+              <div class="grup-form">
+                <label for="inputPasswordKonfirmasiEmail">Konfirmasi dengan password</label>
+                <div class="password-field"><input type="password" id="inputPasswordKonfirmasiEmail" placeholder="Password kamu" autocomplete="current-password"><button class="password-toggle" type="button" data-toggle-password aria-label="Tampilkan password" aria-pressed="false"><span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span></button></div>
+              </div>
+              <small id="pesanGantiEmail" class="pesan-error"></small>
+              <button id="tombolGantiEmail" class="tombol-utama" type="button">Simpan Email</button>
+            </form>
           </section>
 
           <section class="panel panel-bahaya">
@@ -811,7 +817,9 @@ function kalenderUrl($bulan, $kategori) {
 
   <!-- MODAL HAPUS AKUN PERMANEN (2 langkah) -->
   <div id="modalHapusAkun" class="lapisan-modal" aria-hidden="true">
-    <div class="modal-hapus-akun modal-konfirmasi" role="dialog" aria-modal="true" aria-labelledby="judulModalHapusAkun">
+    <form id="formHapusAkunModal" class="modal-hapus-akun modal-konfirmasi" role="dialog" aria-modal="true" aria-labelledby="judulModalHapusAkun" onsubmit="return false;">
+      <!-- Hidden username input to isolate credentials manager autocomplete scope -->
+      <input type="text" name="username" style="display:none;" autocomplete="username" value="<?= e($user_data['email'] ?? '') ?>">
 
       <!-- LANGKAH 1: Peringatan -->
       <div id="hapusAkunLangkah1">
@@ -850,7 +858,7 @@ function kalenderUrl($bulan, $kategori) {
         </div>
       </div>
 
-    </div>
+    </form>
   </div>
   <div id="modalKonfirmasi" class="lapisan-modal" aria-hidden="true"><div class="modal-konfirmasi" role="dialog" aria-modal="true" aria-labelledby="judulModalKonfirmasi" aria-describedby="pesanModalKonfirmasi"><div class="ikon-modal" aria-hidden="true">!</div><div class="isi-modal"><p class="teks-kecil">Konfirmasi</p><h2 id="judulModalKonfirmasi">Konfirmasi aksi</h2><p id="pesanModalKonfirmasi">Lanjutkan aksi ini?</p></div><div class="aksi-modal"><button id="tombolBatalKonfirmasi" class="tombol-modal tombol-modal-kedua" type="button">Batal</button><button id="tombolSetujuKonfirmasi" class="tombol-modal tombol-modal-bahaya" type="button">Lanjutkan</button></div></div></div>
   <div id="modalEditTugas" class="lapisan-modal" aria-hidden="true"><form id="formEditTugas" class="modal-jadwal" role="dialog" aria-modal="true" aria-labelledby="judulModalEditTugas" novalidate><div class="isi-modal"><p class="teks-kecil">Edit Tugas</p><h2 id="judulModalEditTugas">Ubah tugas</h2><p>Perbarui judul, mata kuliah, atau tanggal deadline tugas.</p></div><input type="hidden" id="inputIdEditTugas"><div class="grup-form"><label for="inputNamaEditTugas">Nama tugas</label><input type="text" id="inputNamaEditTugas" placeholder="Contoh: Laporan praktikum" autocomplete="off"><small id="pesanErrorNamaEditTugas" class="pesan-error"></small></div><div class="grup-form"><label for="pilihanMataKuliahEditTugas">Mata kuliah</label><select id="pilihanMataKuliahEditTugas"><option value="">Pilih mata kuliah</option><?php foreach ($courses as $course): ?><option value="<?= e($course['nama_mata_kuliah']) ?>"><?= e($course['nama_mata_kuliah']) ?></option><?php endforeach; ?></select><small id="pesanErrorMataKuliahEditTugas" class="pesan-error"></small></div><div class="grup-form"><label for="inputDeadlineEditTugas">Deadline</label><input type="date" id="inputDeadlineEditTugas"><small id="pesanErrorDeadlineEditTugas" class="pesan-error"></small></div><div class="aksi-modal"><button id="tombolBatalEditTugas" class="tombol-modal tombol-modal-kedua" type="button">Batal</button><button class="tombol-modal tombol-modal-utama" type="submit">Simpan</button></div></form></div>
