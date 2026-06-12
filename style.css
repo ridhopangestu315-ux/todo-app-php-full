@@ -1208,6 +1208,26 @@ select:focus {
   box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.11);
 }
 
+/* Native Calendar Picker Indicator styling for visibility */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 0.95;
+}
+
+body.mode-gelap input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) !important;
+  opacity: 0.75;
+}
+
+body.mode-gelap input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
 input::placeholder {
   color: var(--text-faint);
 }
