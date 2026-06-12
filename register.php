@@ -101,7 +101,7 @@ if (empty($_SESSION['register_token'])) {
 <div class="wadah-aplikasi auth-shell">
   <div class="panel auth-card">
     <div class="identitas-aplikasi auth-brand">
-      <span class="ikon-aplikasi">SF</span>
+      <img src="icon.PNG" alt="Logo StudyFlow" class="ikon-aplikasi">
       <h2>StudyFlow</h2>
     </div>
     <div class="auth-heading">

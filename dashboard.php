@@ -372,7 +372,7 @@ function kalenderUrl($bulan, $kategori) {
   <div class="wadah-aplikasi">
     <aside class="menu-samping">
       <div class="identitas-aplikasi">
-        <span class="ikon-aplikasi">SF</span>
+        <img src="icon.PNG" alt="Logo StudyFlow" class="ikon-aplikasi">
         <div>
           <h2>StudyFlow</h2>
           <p>Student workspace</p>

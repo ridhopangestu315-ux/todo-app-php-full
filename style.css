@@ -129,11 +129,15 @@ body.mode-gelap .menu-samping {
   width: 44px;
   height: 44px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
   color: #fff;
   font-size: 14px;
   font-weight: 800;
   box-shadow: var(--shadow-glow);
+  object-fit: cover;
+}
+
+span.ikon-aplikasi {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
 }
 
 .identitas-aplikasi h2 {
@@ -4895,8 +4899,8 @@ body.mode-gelap .ikon-mode-gelap {
 
 @media (min-width: 900px) {
   .auth-shell {
-    justify-content: flex-start;
-    padding-left: clamp(28px, 9vw, 120px);
+    justify-content: center;
+    padding-left: 16px;
   }
 
   .auth-card {
