@@ -364,7 +364,7 @@ function kalenderUrl($bulan, $kategori) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>StudyFlow - Dashboard Mahasiswa</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260612-dashboard-clean-v8">
+  <link rel="stylesheet" href="style.css?v=20260612-dashboard-clean-v9">
   <link rel="icon" type="image/png" href="icon1.PNG">
 </head>
 <body class="<?= (int)$settings['dark_mode'] ? 'mode-gelap' : '' ?>" data-halaman-aktif="<?= e($active_page) ?>">
@@ -454,7 +454,7 @@ function kalenderUrl($bulan, $kategori) {
       </header>
 
       <section id="dashboard" class="halaman <?= $active_page === 'dashboard' ? 'halaman-aktif' : '' ?>">
-        <section class="hero-dashboard">
+        <section class="hero-dashboard" role="button" tabindex="0" data-quick-action="fokus-hari-ini" aria-label="Fokus tugas deadline hari ini">
           <div class="hero-progress-full">
             <span class="pill-workspace"><span class="dot-aktif"></span>Workspace aktif</span>
             <p class="hero-progress-label">Progress tugas hari ini</p>

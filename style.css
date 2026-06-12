@@ -404,12 +404,34 @@ body.mode-gelap .ikon-mode-gelap {
   -webkit-backdrop-filter: blur(12px);
   margin-bottom: 28px !important;
   isolation: isolate;
+  cursor: pointer;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease, border-color 0.22s ease !important;
+}
+
+.hero-dashboard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.24) !important;
+  box-shadow: 0 12px 36px rgba(99, 102, 241, 0.1) !important;
+}
+
+.hero-dashboard:active {
+  transform: translateY(0);
+}
+
+.hero-dashboard:focus-visible {
+  outline: 3px solid rgba(99, 102, 241, 0.35) !important;
+  outline-offset: 2px;
 }
 
 body.mode-gelap .hero-dashboard {
   background: rgba(15, 23, 42, 0.55) !important;
   border-color: rgba(255, 255, 255, 0.06) !important;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.mode-gelap .hero-dashboard:hover {
+  border-color: rgba(99, 102, 241, 0.35) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45) !important;
 }
 
 /* Glow aura effect on the right */
