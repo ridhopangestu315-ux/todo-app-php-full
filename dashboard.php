@@ -364,7 +364,7 @@ function kalenderUrl($bulan, $kategori) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>StudyFlow - Dashboard Mahasiswa</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260612-water-card-v6">
+  <link rel="stylesheet" href="style.css?v=20260612-dashboard-clean-v8">
   <link rel="icon" type="image/png" href="icon1.PNG">
 </head>
 <body class="<?= (int)$settings['dark_mode'] ? 'mode-gelap' : '' ?>" data-halaman-aktif="<?= e($active_page) ?>">
@@ -404,10 +404,10 @@ function kalenderUrl($bulan, $kategori) {
       <header class="kepala-halaman">
         <div class="kepala-copy">
           <p class="teks-kecil">Catatan Tugas Mahasiswa</p>
-          <h1 id="teksSapaan">Selamat datang kembali, <?= e($nama_user) ?></h1>
+          <h1 id="teksSapaan">Selamat datang kembali,<br><span class="nama-gradient"><?= e($nama_user) ?></span></h1>
+          <p class="tanggal-header-subtitle"><?= e(formatTanggalIndo($today)) ?></p>
         </div>
         <div class="header-actions">
-          <div class="tanggal-header"><span id="teksTanggalRealtime"></span><small id="teksJamRealtime"></small></div>
           <button id="tombolModeGelapHeader" class="tombol-mode-gelap" type="button" data-toggle-mode-gelap aria-label="Toggle dark mode" aria-pressed="<?= (int)$settings['dark_mode'] ? 'true' : 'false' ?>">
             <span class="ikon-mode-gelap" aria-hidden="true"><?= (int)$settings['dark_mode'] ? '☀' : '🌙' ?></span>
           </button>
@@ -419,17 +419,27 @@ function kalenderUrl($bulan, $kategori) {
 
       <section id="dashboard" class="halaman <?= $active_page === 'dashboard' ? 'halaman-aktif' : '' ?>">
         <section class="hero-dashboard">
-          <div class="hero-copy">
-            <span class="pill-status">Workspace aktif</span>
-            <h2 id="teksSapaanHero">Selamat datang kembali, <?= e($nama_user) ?></h2>
-            <p id="teksTanggalHero"><?= e(formatTanggalIndo($today)) ?></p>
-            <div class="hero-progress">
-              <div class="progress-meta"><span>Progress tugas hari ini</span><strong id="persenProgressHariIni"><?= (int)$progress_hari_ini ?>%</strong></div>
-              <div class="progress-track" aria-label="Progress produktivitas"><span id="barProgressHariIni" class="progress-fill" style="width: <?= (int)$progress_hari_ini ?>%"></span></div>
-              <small id="teksProgressHariIni"><?= $tugas_hariini_semua ? e($tugas_hariini_selesai . ' dari ' . $tugas_hariini_semua . ' tugas hari ini selesai.') : 'Belum ada deadline hari ini. Ruang fokus masih lega.' ?></small>
+          <div class="hero-progress-full">
+            <span class="pill-workspace"><span class="dot-aktif"></span>Workspace aktif</span>
+            <p class="hero-progress-label">Progress tugas hari ini</p>
+            <h2 class="hero-progress-percent" id="persenProgressHariIni"><?= (int)$progress_hari_ini ?>%</h2>
+            
+            <div class="hero-progress-bar-wrap" aria-hidden="true">
+              <div class="hero-progress-bar-track">
+                <div id="barProgressHariIni" class="hero-progress-bar-fill" style="width: <?= (int)$progress_hari_ini ?>%">
+                  <!-- Waves inside the filled part of progress bar -->
+                  <svg class="hero-wave hero-wave-back" viewBox="0 0 240 28" preserveAspectRatio="none">
+                    <path d="M0 15 C 30 6, 30 6, 60 15 S 90 24, 120 15 C 150 6, 150 6, 180 15 S 210 24, 240 15 V 28 H 0 Z" />
+                  </svg>
+                  <svg class="hero-wave hero-wave-front" viewBox="0 0 240 28" preserveAspectRatio="none">
+                    <path d="M0 15 C 30 24, 30 24, 60 15 S 90 6, 120 15 C 150 24, 150 24, 180 15 S 210 6, 240 15 V 28 H 0 Z" />
+                  </svg>
+                </div>
+              </div>
             </div>
+            
+            <small class="hero-progress-detail" id="teksProgressHariIni"><?= $tugas_hariini_semua ? e($tugas_hariini_selesai . ' dari ' . $tugas_hariini_semua . ' tugas hari ini selesai.') : 'Belum ada deadline hari ini. Ruang fokus masih lega.' ?></small>
           </div>
-          <button class="hero-panel" type="button" data-quick-action="fokus-hari-ini" aria-label="Lihat deadline hari ini"><span class="label-mini">Fokus hari ini</span><strong id="angkaFokusHariIni"><?= (int)$tugas_hariini ?></strong><p>Tugas dengan deadline hari ini.</p></button>
         </section>
 
         <section class="section-dashboard">

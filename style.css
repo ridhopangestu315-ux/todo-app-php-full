@@ -390,72 +390,201 @@ body.mode-gelap .ikon-mode-gelap {
   box-shadow: var(--shadow-card);
 }
 
+/* ── Hero Dashboard Progress Card (Glassmorphic) ── */
 .hero-dashboard {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
-  gap: 24px;
-  overflow: hidden;
-  padding: clamp(22px, 4vw, 36px);
-  border-radius: 32px;
+  position: relative !important;
+  display: block !important;
+  overflow: hidden !important;
+  padding: clamp(24px, 5vw, 36px) !important;
+  border-radius: 24px !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  border: 1px solid rgba(14, 165, 233, 0.12) !important;
+  box-shadow: 0 8px 30px rgba(0, 120, 220, 0.05) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  margin-bottom: 28px !important;
+  isolation: isolate;
 }
 
-.hero-dashboard::after {
+body.mode-gelap .hero-dashboard {
+  background: rgba(15, 23, 42, 0.55) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Glow aura effect on the right */
+.hero-dashboard::before {
   content: "";
   position: absolute;
-  right: -80px;
-  top: -90px;
-  width: 280px;
-  height: 280px;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 45%;
+  background: radial-gradient(circle at 80% 50%, rgba(56, 189, 248, 0.14), rgba(99, 102, 241, 0.08) 50%, transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+body.mode-gelap .hero-dashboard::before {
+  background: radial-gradient(circle at 80% 50%, rgba(99, 102, 241, 0.16), rgba(56, 189, 248, 0.08) 50%, transparent 100%);
+}
+
+.hero-progress-full {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.pill-workspace {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(124, 58, 237, 0.24), transparent 70%);
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 18px;
+}
+
+body.mode-gelap .pill-workspace {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.16);
+}
+
+.dot-aktif {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.hero-progress-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0 0 8px 0;
+}
+
+body.mode-gelap .hero-progress-label {
+  color: #9ca3af;
+}
+
+.hero-progress-percent {
+  font-size: clamp(48px, 6vw, 64px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -2px;
+  margin: 0 0 16px 0;
+  background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-progress-bar-wrap {
+  width: 100%;
+  max-width: 680px;
+  margin-bottom: 12px;
+}
+
+.hero-progress-bar-track {
+  width: 100%;
+  height: 26px;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+body.mode-gelap .hero-progress-bar-track {
+  background: rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.hero-progress-bar-fill {
+  position: relative;
+  height: 100%;
+  border-radius: inherit;
+  overflow: hidden;
+  background: linear-gradient(90deg, #0284c7, #6366f1, #a855f7);
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.35);
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: growWidth 1.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Waves scrolling inside the progress fill */
+.hero-wave {
+  position: absolute;
+  left: 0;
+  width: 200%;
+  height: 26px;
+  top: -13px;
+  will-change: transform;
   pointer-events: none;
 }
 
-.pill-status {
-  display: inline-flex;
-  width: fit-content;
-  margin-bottom: 16px;
-  padding: 7px 11px;
-  border-radius: 999px;
-  background: rgba(79, 70, 229, 0.1);
-  color: var(--primary);
-  font-size: 12px;
-  font-weight: 800;
+.hero-wave-back {
+  fill: rgba(255, 255, 255, 0.12);
+  animation: hero-wave-back-scroll 6.5s linear infinite;
+  z-index: 1;
 }
 
-.hero-copy h2 {
-  max-width: 740px;
-  font-size: clamp(32px, 5vw, 56px);
-  line-height: 1.02;
-  letter-spacing: -0.06em;
+.hero-wave-front {
+  fill: rgba(255, 255, 255, 0.22);
+  animation: hero-wave-front-scroll 3.4s linear infinite;
+  z-index: 2;
 }
 
-.hero-copy > p {
-  margin-top: 12px;
-  color: var(--text-soft);
-  font-weight: 700;
+@keyframes hero-wave-back-scroll {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
 }
 
-.hero-progress {
-  max-width: 560px;
-  margin-top: 28px;
+@keyframes hero-wave-front-scroll {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
 }
 
-.progress-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  color: var(--text-soft);
+.hero-progress-detail {
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
+  color: #4b5563;
+  display: block;
 }
 
-.progress-meta strong {
-  min-width: 58px;
-  color: var(--text);
-  text-align: center;
+body.mode-gelap .hero-progress-detail {
+  color: #9ca3af;
+}
+
+/* Gradient name & Subtitle date in header */
+.nama-gradient {
+  background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.tanggal-header-subtitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-top: 8px;
+}
+
+body.mode-gelap .tanggal-header-subtitle {
+  color: #9ca3af;
 }
 
 .progress-track {
