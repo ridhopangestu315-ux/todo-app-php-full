@@ -6016,3 +6016,45 @@ body.mode-gelap .panel-progress-dashboard:hover {
     font-size: 10px;
   }
 }
+
+/* ── Modern SVGs inside Navigation menus (Sidebar and Mobile bar) ── */
+.ikon-menu-svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2.2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  transition: stroke-width 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Hover effects for desktop sidebar */
+.tombol-menu:hover .ikon-menu-svg {
+  transform: scale(1.1);
+}
+
+/* Active effects */
+.tombol-menu.aktif .ikon-menu-svg {
+  stroke-width: 2.5px;
+}
+
+/* Mobile bottom nav tweaks */
+.tombol-nav-mobile span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 3px;
+}
+
+.tombol-nav-mobile .ikon-menu-svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2px;
+}
+
+.tombol-nav-mobile.aktif .ikon-menu-svg {
+  transform: scale(1.08);
+  stroke-width: 2.3px;
+}
