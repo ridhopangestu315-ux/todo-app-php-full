@@ -364,7 +364,7 @@ function kalenderUrl($bulan, $kategori) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>StudyFlow - Dashboard Mahasiswa</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260612-dashboard-clean-v9">
+  <link rel="stylesheet" href="style.css?v=20260612-dashboard-clean-v13">
   <link rel="icon" type="image/png" href="icon1.PNG">
 </head>
 <body class="<?= (int)$settings['dark_mode'] ? 'mode-gelap' : '' ?>" data-halaman-aktif="<?= e($active_page) ?>">
@@ -509,7 +509,6 @@ function kalenderUrl($bulan, $kategori) {
                 
                 <div class="kps-content">
                   <div class="kps-percent"><?= (int)$progress_total ?>%</div>
-                  <div class="kps-label">PROGRESS TUGAS</div>
                   <div class="kps-stats"><?= (int)$tugas_selesai ?> dari <?= (int)$total_tugas ?> selesai</div>
                 </div>
                 
