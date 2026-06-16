@@ -55,6 +55,102 @@ function validJam($value) {
     return (bool)preg_match('/^\d{2}:\d{2}$/', (string)$value);
 }
 
+function formatTanggalIndoApi($tanggal) {
+    if (!$tanggal) return '-';
+
+    $bulan = [
+        1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+
+    $timestamp = strtotime((string)$tanggal);
+    if (!$timestamp) return (string)$tanggal;
+
+    return date('j', $timestamp) . ' ' . $bulan[(int)date('n', $timestamp)] . ' ' . date('Y', $timestamp);
+}
+
+function ambilNotifikasiDeadline($conn, $user_id) {
+    $kolom_waktu = punyaKolom($conn, 'tasks', 'dibuat_pada') ? 'dibuat_pada' : 'created_at';
+    $stmt = mysqli_prepare($conn, "
+        SELECT id, nama_tugas, mata_kuliah, deadline, sudah_selesai, `$kolom_waktu` AS dibuat_pada
+        FROM tasks
+        WHERE user_id = ?
+          AND sudah_selesai = 0
+          AND deadline IS NOT NULL
+          AND deadline <= DATE_ADD(CURDATE(), INTERVAL 2 DAY)
+        ORDER BY deadline ASC, `$kolom_waktu` DESC
+    ");
+    if (!$stmt) {
+        return [];
+    }
+
+    mysqli_stmt_bind_param($stmt, "i", $user_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $tasks = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    mysqli_stmt_close($stmt);
+
+    $notifikasi = [];
+    $prioritas = [
+        'terlewat' => 1,
+        'hari_ini' => 2,
+        'besok' => 3,
+        'dua_hari' => 4
+    ];
+
+    foreach ($tasks as $task) {
+        $deadline = $task['deadline'] ?? '';
+        if (!$deadline) continue;
+
+        $selisih_hari = (int)(new DateTime('today'))->diff(new DateTime($deadline))->format('%r%a');
+        if ($selisih_hari < 0) {
+            $tipe = 'terlewat';
+            $judul = 'Deadline Terlewat';
+            $status = 'Terlambat ' . abs($selisih_hari) . ' hari';
+            $ikon = '!';
+        } elseif ($selisih_hari === 0) {
+            $tipe = 'hari_ini';
+            $judul = 'Deadline Hari Ini';
+            $status = 'Harus diselesaikan hari ini';
+            $ikon = '!';
+        } elseif ($selisih_hari === 1) {
+            $tipe = 'besok';
+            $judul = 'Deadline Besok';
+            $status = 'Tersisa 1 hari';
+            $ikon = '!';
+        } elseif ($selisih_hari === 2) {
+            $tipe = 'dua_hari';
+            $judul = 'Deadline 2 Hari Lagi';
+            $status = 'Tersisa 2 hari';
+            $ikon = 'DL';
+        } else {
+            continue;
+        }
+
+        $notifikasi[] = [
+            'id' => (int)$task['id'],
+            'nama_tugas' => $task['nama_tugas'],
+            'mata_kuliah' => $task['mata_kuliah'] ?: 'Tanpa mata kuliah',
+            'deadline' => $deadline,
+            'deadline_label' => formatTanggalIndoApi($deadline),
+            'tipe' => $tipe,
+            'judul' => $judul,
+            'status' => $status,
+            'ikon' => $ikon,
+            'prioritas' => $prioritas[$tipe]
+        ];
+    }
+
+    usort($notifikasi, function ($a, $b) {
+        if ($a['prioritas'] === $b['prioritas']) {
+            return strcmp($a['deadline'], $b['deadline']);
+        }
+        return $a['prioritas'] <=> $b['prioritas'];
+    });
+
+    return $notifikasi;
+}
+
 function punyaKolom($conn, $table, $column) {
     $stmt = mysqli_prepare($conn, "SELECT COUNT(*) AS cnt FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?");
     if (!$stmt) {
@@ -200,6 +296,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $settings = ['dark_mode' => 0, 'notifikasi' => 1];
         }
         respons('success', 'Settings berhasil diambil', $settings);
+    }
+
+    elseif ($aksi === 'ambil_notifikasi_deadline') {
+        $stmt = mysqli_prepare($conn, "SELECT notifikasi FROM settings WHERE user_id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $user_id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $settings = mysqli_fetch_assoc($result);
+        $notifikasi_aktif = (int)($settings['notifikasi'] ?? 1) === 1;
+
+        if (!$notifikasi_aktif) {
+            respons('success', 'Notifikasi dinonaktifkan', [
+                'notifikasi' => 0,
+                'jumlah' => 0,
+                'items' => []
+            ]);
+        }
+
+        $items = ambilNotifikasiDeadline($conn, $user_id);
+        respons('success', 'Notifikasi deadline berhasil diambil', [
+            'notifikasi' => 1,
+            'jumlah' => count($items),
+            'items' => $items
+        ]);
     }
 
     elseif ($aksi === 'ambil_mata_kuliah') {
@@ -445,7 +565,7 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // UPDATE SETTINGS
     elseif ($aksi === 'update_settings') {
-        $notifikasi = (int)($input['notifikasi'] ?? 1);
+        $notifikasi = (int)($input['notifikasi'] ?? 1) === 1 ? 1 : 0;
 
         $stmt = mysqli_prepare($conn, "
             INSERT INTO settings (user_id, notifikasi) VALUES (?, ?)
@@ -454,7 +574,12 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         mysqli_stmt_bind_param($stmt, "iii", $user_id, $notifikasi, $notifikasi);
 
         if (mysqli_stmt_execute($stmt)) {
-            respons('success', 'Settings berhasil diperbarui');
+            $items = $notifikasi ? ambilNotifikasiDeadline($conn, $user_id) : [];
+            respons('success', 'Settings berhasil diperbarui', [
+                'notifikasi' => $notifikasi,
+                'jumlah' => count($items),
+                'items' => $items
+            ]);
         } else {
             respons('error', 'Gagal memperbarui settings');
         }

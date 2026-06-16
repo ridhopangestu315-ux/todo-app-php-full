@@ -171,6 +171,68 @@ Jika berhasil, delete file `test_db.php`
 
 ---
 
+### TAHAP 4B: KONFIGURASI EMAIL RESET PASSWORD
+
+Fitur lupa password membutuhkan Gmail SMTP. Buat file `config.local.php` di root project, sejajar dengan `koneksi.php`.
+
+```php
+<?php
+return [
+    // Database lokal atau InfinityFree.
+    'host' => 'localhost',
+    'db'   => 'studyflow',
+    'user' => 'root',
+    'pass' => '',
+
+    // Wajib diganti sesuai domain aplikasi.
+    'base_url' => 'http://localhost/todo-app-php-full',
+
+    // Gmail SMTP. Gunakan App Password, bukan password login Gmail biasa.
+    'smtp_host' => 'smtp.gmail.com',
+    'smtp_port' => 465,
+    'smtp_secure' => 'ssl',
+    'smtp_username' => 'email@gmail.com',
+    'smtp_password' => 'gmail_app_password_16_digit',
+    'from_email' => 'email@gmail.com',
+    'from_name' => 'StudyFlow',
+];
+```
+
+Untuk InfinityFree, ubah `base_url` menjadi domain production:
+
+```php
+'base_url' => 'https://domain-saya.infinityfreeapp.com',
+```
+
+Pastikan tabel reset password sudah ada. Jika database lama belum memakai `database.sql` terbaru, jalankan SQL berikut di phpMyAdmin:
+
+```sql
+CREATE TABLE IF NOT EXISTS password_resets (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    token CHAR(64) NOT NULL,
+    expired_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY uniq_password_reset_token (token),
+    INDEX idx_user_id (user_id),
+    INDEX idx_expired_at (expired_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS password_reset_attempts (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    email_hash CHAR(64) NOT NULL,
+    ip_hash CHAR(64) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_email_hash_created_at (email_hash, created_at),
+    INDEX idx_ip_hash_created_at (ip_hash, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+Jika muncul pesan `Layanan reset password belum dikonfigurasi`, berarti `config.local.php` belum ada atau nilai `smtp_username`, `smtp_password`, `from_email`, dan `base_url` belum benar.
+
+---
+
 ### TAHAP 5: AKSES APLIKASI
 
 #### 5.1 Buka di Browser

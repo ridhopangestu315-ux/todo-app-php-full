@@ -80,3 +80,31 @@ CREATE TABLE IF NOT EXISTS courses (
     UNIQUE KEY uniq_user_course (user_id, nama_mata_kuliah),
     INDEX idx_user_id (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- TABLE: PASSWORD RESETS
+-- ============================================
+CREATE TABLE IF NOT EXISTS password_resets (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    token CHAR(64) NOT NULL,
+    expired_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY uniq_password_reset_user (user_id),
+    UNIQUE KEY uniq_password_reset_token (token),
+    INDEX idx_user_id (user_id),
+    INDEX idx_expired_at (expired_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- TABLE: PASSWORD RESET ATTEMPTS
+-- ============================================
+CREATE TABLE IF NOT EXISTS password_reset_attempts (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    email_hash CHAR(64) NOT NULL,
+    ip_hash CHAR(64) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_email_hash_created_at (email_hash, created_at),
+    INDEX idx_ip_hash_created_at (ip_hash, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

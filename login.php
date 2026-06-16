@@ -95,6 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
       <button id="tombolSubmitLogin" type="submit" class="tombol-utama auth-submit">Login</button>
     </form>
+    <p class="auth-switch"><a href="forgot_password.php">Lupa password?</a></p>
     <p class="auth-switch">Belum punya akun? <a href="register.php">Daftar</a></p>
   </div>
 </div>

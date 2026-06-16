@@ -236,6 +236,7 @@ if (!$settings) {
     mysqli_stmt_close($stmt);
     $settings = ['dark_mode' => 0, 'notifikasi' => 1];
 }
+$notifikasiAktif = (int)($settings['notifikasi'] ?? 1) === 1;
 
 $nama_user = $user_data['nama'] ?? ($_SESSION['nama'] ?? 'Mahasiswa');
 $foto_profil = $user_data['foto_profil'] ?? '';
@@ -345,11 +346,11 @@ foreach ($itemsKalender as $item) {
 }
 
 $agendaHariIni = $itemsByDate[$today] ?? [];
-$reminderDeadline = array_values(array_filter($itemsKalender, function ($item) {
+$reminderDeadline = $notifikasiAktif ? array_values(array_filter($itemsKalender, function ($item) {
     if ($item['kategori'] !== 'deadline') return false;
     $diff = (int)(new DateTime('today'))->diff(new DateTime($item['tanggal']))->format('%r%a');
     return $diff >= 0 && $diff <= 2;
-}));
+})) : [];
 
 $notifikasiDeadline = [];
 $prioritasNotifikasi = [
@@ -359,7 +360,7 @@ $prioritasNotifikasi = [
     'dua_hari' => 4
 ];
 
-foreach ($tasks as $task) {
+if ($notifikasiAktif) foreach ($tasks as $task) {
     if ((int)$task['sudah_selesai'] === 1 || empty($task['deadline'])) {
         continue;
     }
@@ -409,7 +410,7 @@ usort($notifikasiDeadline, function ($a, $b) {
     return $a['prioritas'] <=> $b['prioritas'];
 });
 
-$jumlahNotifikasiDeadline = count($notifikasiDeadline);
+$jumlahNotifikasiDeadline = $notifikasiAktif ? count($notifikasiDeadline) : 0;
 
 $courses = ambilSemua($conn, "SELECT id, nama_mata_kuliah FROM courses WHERE user_id = ? ORDER BY nama_mata_kuliah ASC", 'i', [$user_id]);
 
@@ -717,14 +718,14 @@ function kalenderUrl($bulan, $kategori) {
           <p class="tanggal-header-subtitle"><?= e(formatTanggalIndo($today)) ?></p>
         </div>
         <div class="header-actions">
-          <div class="notifikasi-deadline-wrap">
+          <div class="notifikasi-deadline-wrap" data-notifikasi-aktif="<?= $notifikasiAktif ? '1' : '0' ?>">
             <button id="tombolNotifikasiDeadline" class="tombol-notifikasi-deadline" type="button" aria-label="Buka notifikasi deadline" aria-expanded="false" aria-controls="panelNotifikasiDeadline">
               <svg class="ikon-lonceng-deadline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
               </svg>
               <?php if ($jumlahNotifikasiDeadline > 0): ?>
-                <span class="badge-notifikasi-deadline"><?= e($jumlahNotifikasiDeadline > 99 ? '99+' : $jumlahNotifikasiDeadline) ?></span>
+                <span id="badgeNotifikasiDeadline" class="badge-notifikasi-deadline"><?= e($jumlahNotifikasiDeadline > 99 ? '99+' : $jumlahNotifikasiDeadline) ?></span>
               <?php endif; ?>
             </button>
 
@@ -734,11 +735,13 @@ function kalenderUrl($bulan, $kategori) {
                   <p class="teks-kecil">Notifikasi Deadline</p>
                   <h3>Prioritas tugas</h3>
                 </div>
-                <span class="chip-jumlah-notifikasi"><?= e($jumlahNotifikasiDeadline) ?> aktif</span>
+                <span id="chipJumlahNotifikasi" class="chip-jumlah-notifikasi"><?= e($jumlahNotifikasiDeadline) ?> aktif</span>
               </div>
 
-              <?php if ($jumlahNotifikasiDeadline > 0): ?>
-                <div class="daftar-notifikasi-deadline">
+              <?php if (!$notifikasiAktif): ?>
+                <div id="isiNotifikasiDeadline" class="kosong-notifikasi-deadline">Notifikasi dinonaktifkan</div>
+              <?php elseif ($jumlahNotifikasiDeadline > 0): ?>
+                <div id="isiNotifikasiDeadline" class="daftar-notifikasi-deadline">
                   <?php foreach ($notifikasiDeadline as $notifikasi): ?>
                     <article class="item-notifikasi-deadline notifikasi-<?= e($notifikasi['tipe']) ?>">
                       <span class="ikon-status-notifikasi" aria-hidden="true"><?= e($notifikasi['ikon']) ?></span>
@@ -756,7 +759,7 @@ function kalenderUrl($bulan, $kategori) {
                   <?php endforeach; ?>
                 </div>
               <?php else: ?>
-                <div class="kosong-notifikasi-deadline">Tidak ada deadline mendesak. Semua aman untuk saat ini.</div>
+                <div id="isiNotifikasiDeadline" class="kosong-notifikasi-deadline">Tidak ada deadline mendesak. Semua aman untuk saat ini.</div>
               <?php endif; ?>
             </div>
           </div>
