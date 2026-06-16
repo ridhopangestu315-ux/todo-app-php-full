@@ -351,6 +351,66 @@ $reminderDeadline = array_values(array_filter($itemsKalender, function ($item) {
     return $diff >= 0 && $diff <= 2;
 }));
 
+$notifikasiDeadline = [];
+$prioritasNotifikasi = [
+    'terlewat' => 1,
+    'hari_ini' => 2,
+    'besok' => 3,
+    'dua_hari' => 4
+];
+
+foreach ($tasks as $task) {
+    if ((int)$task['sudah_selesai'] === 1 || empty($task['deadline'])) {
+        continue;
+    }
+
+    $selisihHari = (int)(new DateTime('today'))->diff(new DateTime($task['deadline']))->format('%r%a');
+    if ($selisihHari < 0) {
+        $tipeNotifikasi = 'terlewat';
+        $judulNotifikasi = 'Deadline Terlewat';
+        $statusNotifikasi = 'Terlambat ' . abs($selisihHari) . ' hari';
+        $ikonNotifikasi = '⏰';
+    } elseif ($selisihHari === 0) {
+        $tipeNotifikasi = 'hari_ini';
+        $judulNotifikasi = 'Deadline Hari Ini';
+        $statusNotifikasi = 'Harus diselesaikan hari ini';
+        $ikonNotifikasi = '🚨';
+    } elseif ($selisihHari === 1) {
+        $tipeNotifikasi = 'besok';
+        $judulNotifikasi = 'Deadline Besok';
+        $statusNotifikasi = 'Tersisa 1 hari';
+        $ikonNotifikasi = '⚠️';
+    } elseif ($selisihHari === 2) {
+        $tipeNotifikasi = 'dua_hari';
+        $judulNotifikasi = 'Deadline 2 Hari Lagi';
+        $statusNotifikasi = 'Tersisa 2 hari';
+        $ikonNotifikasi = '📅';
+    } else {
+        continue;
+    }
+
+    $notifikasiDeadline[] = [
+        'id' => (int)$task['id'],
+        'nama_tugas' => $task['nama_tugas'],
+        'mata_kuliah' => $task['mata_kuliah'] ?: 'Tanpa mata kuliah',
+        'deadline' => $task['deadline'],
+        'tipe' => $tipeNotifikasi,
+        'judul' => $judulNotifikasi,
+        'status' => $statusNotifikasi,
+        'ikon' => $ikonNotifikasi,
+        'prioritas' => $prioritasNotifikasi[$tipeNotifikasi]
+    ];
+}
+
+usort($notifikasiDeadline, function ($a, $b) {
+    if ($a['prioritas'] === $b['prioritas']) {
+        return strcmp($a['deadline'], $b['deadline']);
+    }
+    return $a['prioritas'] <=> $b['prioritas'];
+});
+
+$jumlahNotifikasiDeadline = count($notifikasiDeadline);
+
 $courses = ambilSemua($conn, "SELECT id, nama_mata_kuliah FROM courses WHERE user_id = ? ORDER BY nama_mata_kuliah ASC", 'i', [$user_id]);
 
 function kalenderUrl($bulan, $kategori) {
@@ -366,6 +426,219 @@ function kalenderUrl($bulan, $kategori) {
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=20260612-dashboard-clean-v14">
   <link rel="icon" type="image/png" href="icon1.PNG">
+  <style>
+    .notifikasi-deadline-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .tombol-notifikasi-deadline {
+      position: relative;
+      display: grid;
+      width: 46px;
+      height: 46px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow-card);
+      transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .tombol-notifikasi-deadline:hover,
+    .tombol-notifikasi-deadline[aria-expanded="true"] {
+      transform: translateY(-2px);
+      border-color: rgba(79, 70, 229, 0.35);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .ikon-lonceng-deadline {
+      width: 21px;
+      height: 21px;
+    }
+
+    .badge-notifikasi-deadline {
+      position: absolute;
+      top: -7px;
+      right: -7px;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--surface-strong);
+      border-radius: 999px;
+      background: #e11d48;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1;
+      box-shadow: 0 8px 16px rgba(225, 29, 72, 0.28);
+    }
+
+    .panel-notifikasi-deadline {
+      position: absolute;
+      top: calc(100% + 14px);
+      right: 0;
+      z-index: 80;
+      width: min(390px, calc(100vw - 32px));
+      max-height: min(560px, calc(100vh - 120px));
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--surface-strong);
+      box-shadow: 0 22px 48px rgba(15, 23, 42, 0.18);
+      transform: translateY(-8px) scale(0.98);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.16s ease, transform 0.16s ease;
+    }
+
+    .panel-notifikasi-deadline.terbuka {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .kepala-notifikasi-deadline {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .kepala-notifikasi-deadline h3 {
+      margin: 2px 0 0;
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .chip-jumlah-notifikasi {
+      flex-shrink: 0;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(79, 70, 229, 0.1);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .daftar-notifikasi-deadline {
+      display: grid;
+      gap: 10px;
+      max-height: 430px;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .item-notifikasi-deadline {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 12px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+    }
+
+    .ikon-status-notifikasi {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 14px;
+      font-size: 19px;
+    }
+
+    .notifikasi-terlewat .ikon-status-notifikasi {
+      background: rgba(225, 29, 72, 0.12);
+    }
+
+    .notifikasi-hari_ini .ikon-status-notifikasi {
+      background: rgba(220, 38, 38, 0.12);
+    }
+
+    .notifikasi-besok .ikon-status-notifikasi {
+      background: rgba(217, 119, 6, 0.13);
+    }
+
+    .notifikasi-dua_hari .ikon-status-notifikasi {
+      background: rgba(37, 99, 235, 0.12);
+    }
+
+    .isi-notifikasi-deadline {
+      min-width: 0;
+    }
+
+    .baris-status-notifikasi {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 5px;
+    }
+
+    .judul-status-notifikasi {
+      color: var(--text-soft);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .badge-status-notifikasi {
+      flex-shrink: 0;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--surface-muted);
+      color: var(--text-soft);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .nama-tugas-notifikasi {
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .meta-notifikasi-deadline {
+      margin-top: 6px;
+      color: var(--text-soft);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .kosong-notifikasi-deadline {
+      padding: 26px 18px;
+      text-align: center;
+      color: var(--text-soft);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 720px) {
+      .notifikasi-deadline-wrap {
+        position: static;
+      }
+
+      .panel-notifikasi-deadline {
+        position: fixed;
+        top: 84px;
+        left: 16px;
+        right: 16px;
+        width: auto;
+      }
+    }
+  </style>
 </head>
 <body class="<?= (int)$settings['dark_mode'] ? 'mode-gelap' : '' ?>" data-halaman-aktif="<?= e($active_page) ?>">
   <div class="latar-ambient" aria-hidden="true"></div>
@@ -444,6 +717,49 @@ function kalenderUrl($bulan, $kategori) {
           <p class="tanggal-header-subtitle"><?= e(formatTanggalIndo($today)) ?></p>
         </div>
         <div class="header-actions">
+          <div class="notifikasi-deadline-wrap">
+            <button id="tombolNotifikasiDeadline" class="tombol-notifikasi-deadline" type="button" aria-label="Buka notifikasi deadline" aria-expanded="false" aria-controls="panelNotifikasiDeadline">
+              <svg class="ikon-lonceng-deadline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+              <?php if ($jumlahNotifikasiDeadline > 0): ?>
+                <span class="badge-notifikasi-deadline"><?= e($jumlahNotifikasiDeadline > 99 ? '99+' : $jumlahNotifikasiDeadline) ?></span>
+              <?php endif; ?>
+            </button>
+
+            <div id="panelNotifikasiDeadline" class="panel-notifikasi-deadline" role="dialog" aria-label="Daftar notifikasi deadline" aria-hidden="true">
+              <div class="kepala-notifikasi-deadline">
+                <div>
+                  <p class="teks-kecil">Notifikasi Deadline</p>
+                  <h3>Prioritas tugas</h3>
+                </div>
+                <span class="chip-jumlah-notifikasi"><?= e($jumlahNotifikasiDeadline) ?> aktif</span>
+              </div>
+
+              <?php if ($jumlahNotifikasiDeadline > 0): ?>
+                <div class="daftar-notifikasi-deadline">
+                  <?php foreach ($notifikasiDeadline as $notifikasi): ?>
+                    <article class="item-notifikasi-deadline notifikasi-<?= e($notifikasi['tipe']) ?>">
+                      <span class="ikon-status-notifikasi" aria-hidden="true"><?= e($notifikasi['ikon']) ?></span>
+                      <div class="isi-notifikasi-deadline">
+                        <div class="baris-status-notifikasi">
+                          <span class="judul-status-notifikasi"><?= e($notifikasi['judul']) ?></span>
+                          <span class="badge-status-notifikasi"><?= e($notifikasi['status']) ?></span>
+                        </div>
+                        <p class="nama-tugas-notifikasi"><?= e($notifikasi['nama_tugas']) ?></p>
+                        <p class="meta-notifikasi-deadline">
+                          <?= e($notifikasi['mata_kuliah']) ?> · <?= e(formatTanggalIndo($notifikasi['deadline'])) ?>
+                        </p>
+                      </div>
+                    </article>
+                  <?php endforeach; ?>
+                </div>
+              <?php else: ?>
+                <div class="kosong-notifikasi-deadline">Tidak ada deadline mendesak. Semua aman untuk saat ini.</div>
+              <?php endif; ?>
+            </div>
+          </div>
           <button id="tombolModeGelapHeader" class="tombol-mode-gelap" type="button" data-toggle-mode-gelap aria-label="Toggle dark mode" aria-pressed="<?= (int)$settings['dark_mode'] ? 'true' : 'false' ?>">
             <span class="ikon-mode-gelap" aria-hidden="true"><?= (int)$settings['dark_mode'] ? '☀' : '🌙' ?></span>
           </button>
@@ -931,6 +1247,37 @@ function kalenderUrl($bulan, $kategori) {
       btn.querySelector('span').innerHTML = show ? '<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#666\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M17.94 17.94A10.07 10.07 0 0 1 12 20c-6.5 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94\"\/><path d=\"M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19\"\/><line x1=\"1\" y1=\"1\" x2=\"23\" y2=\"23\"\/><\/svg>' : '<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#666\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/><\/svg>';
     });
   });
+
+  (function() {
+    var tombolNotifikasi = document.getElementById('tombolNotifikasiDeadline');
+    var panelNotifikasi = document.getElementById('panelNotifikasiDeadline');
+    if (!tombolNotifikasi || !panelNotifikasi) return;
+
+    function setPanelNotifikasi(terbuka) {
+      panelNotifikasi.classList.toggle('terbuka', terbuka);
+      panelNotifikasi.setAttribute('aria-hidden', terbuka ? 'false' : 'true');
+      tombolNotifikasi.setAttribute('aria-expanded', terbuka ? 'true' : 'false');
+    }
+
+    tombolNotifikasi.addEventListener('click', function(event) {
+      event.stopPropagation();
+      setPanelNotifikasi(!panelNotifikasi.classList.contains('terbuka'));
+    });
+
+    panelNotifikasi.addEventListener('click', function(event) {
+      event.stopPropagation();
+    });
+
+    document.addEventListener('click', function() {
+      setPanelNotifikasi(false);
+    });
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        setPanelNotifikasi(false);
+      }
+    });
+  })();
   </script>
   <script src="script.js?v=20260604-hosting-fix"></script>
 </body>
